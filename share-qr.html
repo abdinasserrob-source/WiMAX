@@ -17,7 +17,7 @@
           </svg>
         </button>
         <h1 class="page-header__title">Partager l'accès</h1>
-        <span class="page-header__balance" aria-hidden="true"></span>
+        <div data-identite-slot aria-live="polite"></div>
       </header>
 
       <div class="share-qr-hero">
@@ -25,7 +25,9 @@
       </div>
 
       <div class="qr-card">
-        <div id="qrcode" style="min-height: 220px"></div>
+        <div id="qrcode" class="qrcode-wrap">
+          <img class="qrcode-img" src="assets/share-qr-scan-me.png" alt="Code QR — Scan Me" />
+        </div>
         <div class="qr-badge">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path
@@ -34,8 +36,6 @@
           </svg>
           Réseau WiMAX Invité
         </div>
-        <p class="qr-help">Ce code permet une connexion directe et sécurisée sans saisie de mot de passe (démonstration : ouvre la page d'accueil du portail).</p>
-      </div>
 
       <div class="share-info-list">
         <div class="share-info-item">
@@ -46,7 +46,7 @@
           </svg>
           <div>
             <strong>Validité temporaire</strong>
-            <p>Ce code pointe vers l'URL actuelle du portail ; en production, vous pourriez lier un jeton expirant sous 24 h.</p>
+            <p>Ici le visuel encode une URL de démonstration ; en production, vous pourriez lier l’URL du portail et un jeton expirant sous 24 h.</p>
           </div>
         </div>
         <div class="share-info-item">
@@ -57,7 +57,7 @@
           </svg>
           <div>
             <strong>Multi-appareils</strong>
-            <p>Jusqu'à 3 amis peuvent utiliser ce code simultanément sur le portail WiMAX (accès statique aux mêmes fichiers).</p>
+            <p>Tout le monde peut utiliser ce code en même temps sur le portail WiMAX : plusieurs appareils peuvent y accéder simultanément aux mêmes contenus.</p>
           </div>
         </div>
       </div>
@@ -73,28 +73,21 @@
 
       <p class="share-qr-footer">WiMAX Portal • Secure Access</p>
     </div>
+    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="js/identite.js"></script>
     <script>
       (function () {
-        var homeUrl = new URL("home.html", window.location.href).href;
-        var el = document.getElementById("qrcode");
-        el.innerHTML = "";
-        new QRCode(el, {
-          text: homeUrl,
-          width: 220,
-          height: 220,
-          correctLevel: QRCode.CorrectLevel.M,
-        });
+        var demoUrl = "https://www.google.com";
 
         document.getElementById("share-portal-btn").addEventListener("click", function () {
-          var text = "Rejoins le portail WiMAX : " + homeUrl;
+          var text = "Scanne le code sur la page ou ouvre ce lien : " + demoUrl;
           if (navigator.share) {
             navigator
               .share({
-                title: "Portail WiMAX",
+                title: "Portail WiMAX — partage démo",
                 text: text,
-                url: homeUrl,
+                url: demoUrl,
               })
               .catch(function () {});
           } else {

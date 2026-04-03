@@ -1,23 +1,25 @@
 /**
- * Galerie — souvenirs dans localStorage.
- * Ajout : tout le monde. Suppression : propriétaire (même prénom que le dernier saisi) ou organisateur (code).
+ * Galerie — souvenirs : { id, identite, image, date } (identite = localStorage monIdentite).
+ * Appui long : supprimer si identite correspond, ou mode organisateur.
  */
 (function () {
   var KEY_SOUVENIRS = "souvenirs";
-  var KEY_PRENOM = "dernierPrenom";
   var KEY_ADMIN_UNTIL = "galerieAdminUntil";
   var LONG_PRESS_MS = 600;
+  /** Après ouverture du menu, ignorer le clic « fantôme » (touchend/mouseup → click) qui refermait tout de suite. */
+  var menuOpenGuardUntil = 0;
+  var MENU_OPEN_GUARD_MS = 550;
   /** Changez ce code (et gardez-le secret côté encadrant — il reste lisible dans le fichier, pas de serveur ici). */
   var ADMIN_PIN = "wimax";
+  /** Au-delà, certains navigateurs échouent ou figent la page (data URL en mémoire). */
+  var MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 
   var grid = document.getElementById("souvenirs-grid");
   var fab = document.getElementById("fab-galerie");
   var overlay = document.getElementById("modal-overlay");
-  var stepPrenom = document.getElementById("modal-step-prenom");
   var stepSource = document.getElementById("modal-step-source");
-  var inputPrenom = document.getElementById("input-prenom");
-  var btnPrenomOk = document.getElementById("btn-prenom-ok");
-  var btnPrenomCancel = document.getElementById("btn-prenom-cancel");
+  var elModalIdentiteDisplay = document.getElementById("galerie-modal-identite-display");
+  var btnAddCancel = document.getElementById("btn-add-cancel");
   var btnSourceCamera = document.getElementById("btn-source-camera");
   var btnSourceGallery = document.getElementById("btn-source-gallery");
   var inputCamera = document.getElementById("input-camera");
@@ -85,11 +87,50 @@
     }
   }
 
+  function getMonIdentite() {
+    if (window.WiMAXIdentite && typeof window.WiMAXIdentite.get === "function") {
+      return window.WiMAXIdentite.get() || "";
+    }
+    return "";
+  }
+
+  function displayIdentiteForItem(item) {
+    return item.identite || item.prenom || "—";
+  }
+
+  function namePartAfterEmoji(full) {
+    full = String(full || "").trim();
+    var i = full.indexOf(" ");
+    return i === -1 ? full : full.slice(i + 1).trim();
+  }
+
+  function isOwnerPhoto(item) {
+    var mine = getMonIdentite();
+    if (!mine) return false;
+    if (item.identite === mine) return true;
+    if (item.identite) return false;
+    var legacy = (item.prenom || "").trim();
+    if (!legacy) return false;
+    return normPrenom(legacy) === normPrenom(namePartAfterEmoji(mine));
+  }
+
+  /** Menu appui long : propriétaire (dernierPrenom) ou organisateur. */
+  function canOpenDeleteMenu(item) {
+    return isOwnerPhoto(item) || isAdmin();
+  }
+
   function canDeleteSouvenir(item) {
-    if (isAdmin()) return true;
-    var sessionName = normPrenom(localStorage.getItem(KEY_PRENOM));
-    if (!sessionName) return false;
-    return normPrenom(item.prenom) === sessionName;
+    return isOwnerPhoto(item) || isAdmin();
+  }
+
+  function blockImageContextAndDrag(img) {
+    if (!img) return;
+    img.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+    });
+    img.addEventListener("dragstart", function (e) {
+      e.preventDefault();
+    });
   }
 
   function loadSouvenirs() {
@@ -117,8 +158,10 @@
   }
 
   function clearLongPressState() {
-    document.querySelectorAll(".souvenir-item.show-delete").forEach(function (el) {
-      el.classList.remove("show-delete");
+    document.querySelectorAll(".souvenir-item.show-menu").forEach(function (el) {
+      el.classList.remove("show-menu");
+      var m = el.querySelector(".souvenir-item__menu");
+      if (m) m.setAttribute("aria-hidden", "true");
     });
   }
 
@@ -144,41 +187,71 @@
       .slice()
       .reverse()
       .forEach(function (item) {
-        var deletable = canDeleteSouvenir(item);
+        var menuAllowed = canOpenDeleteMenu(item);
+        var owner = isOwnerPhoto(item);
 
         var wrap = document.createElement("div");
-        wrap.className = "souvenir-item" + (deletable ? "" : " souvenir-item--locked");
+        wrap.className = "souvenir-item" + (menuAllowed ? "" : " souvenir-item--locked");
         wrap.dataset.id = String(item.id);
+
+        var thumb = document.createElement("div");
+        thumb.className = "souvenir-item__thumb";
 
         var img = document.createElement("img");
         img.src = item.image;
-        img.alt = "Souvenir";
+        img.alt = displayIdentiteForItem(item) ? "Souvenir — " + displayIdentiteForItem(item) : "Souvenir";
+        img.setAttribute("draggable", "false");
+        blockImageContextAndDrag(img);
 
-        var del = document.createElement("button");
-        del.type = "button";
-        del.className = "souvenir-item__del";
-        del.setAttribute("aria-label", "Supprimer la photo");
-        del.textContent = "🗑️";
+        thumb.appendChild(img);
+
+        var menu = document.createElement("div");
+        menu.className = "souvenir-item__menu";
+        menu.setAttribute("aria-hidden", "true");
+        var menuBtn = document.createElement("button");
+        menuBtn.type = "button";
+        menuBtn.className = "souvenir-item__menu-btn";
+        menuBtn.textContent = owner ? "🗑️ Supprimer ma photo" : "🗑️ Supprimer (organisateur)";
+        menuBtn.setAttribute("aria-label", owner ? "Supprimer ma photo" : "Supprimer cette photo en tant qu’organisateur");
+        menu.appendChild(menuBtn);
+        thumb.appendChild(menu);
+
+        menuBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (!canDeleteSouvenir(item)) return;
+          var msg = owner
+            ? "🗑️ Supprimer ma photo ?"
+            : "Supprimer cette photo (organisateur) ?";
+          if (!window.confirm(msg)) return;
+          var id = Number(wrap.dataset.id);
+          var next = loadSouvenirs().filter(function (x) {
+            return x.id !== id;
+          });
+          saveSouvenirs(next);
+          clearLongPressState();
+          render();
+        });
 
         var meta = document.createElement("div");
         meta.className = "souvenir-item__meta";
-        meta.innerHTML = '<div class="prenom"></div><div class="date"></div>';
-        meta.querySelector(".prenom").textContent = item.prenom || "—";
-        meta.querySelector(".date").textContent = item.date || "";
+        meta.innerHTML = '<div class="souvenir-item__prenom"></div><div class="souvenir-item__date"></div>';
+        meta.querySelector(".souvenir-item__prenom").textContent = displayIdentiteForItem(item);
+        meta.querySelector(".souvenir-item__date").textContent = item.date || "";
 
-        wrap.appendChild(del);
-        wrap.appendChild(img);
+        wrap.appendChild(thumb);
         wrap.appendChild(meta);
 
         var pressTimer = null;
 
         function startPress() {
-          if (!deletable) return;
+          if (!menuAllowed) return;
           clearTimeout(pressTimer);
           pressTimer = setTimeout(function () {
             clearLongPressState();
-            wrap.classList.add("show-delete");
+            wrap.classList.add("show-menu");
+            menu.setAttribute("aria-hidden", "false");
             pressTimer = null;
+            menuOpenGuardUntil = Date.now() + MENU_OPEN_GUARD_MS;
           }, LONG_PRESS_MS);
         }
 
@@ -189,24 +262,19 @@
           }
         }
 
-        if (deletable) {
-          wrap.addEventListener("touchstart", startPress, { passive: true });
-          wrap.addEventListener("touchend", cancelPress);
-          wrap.addEventListener("touchcancel", cancelPress);
-          wrap.addEventListener("mousedown", startPress);
-          wrap.addEventListener("mouseup", cancelPress);
-          wrap.addEventListener("mouseleave", cancelPress);
+        if (menuAllowed) {
+          thumb.addEventListener("touchstart", startPress, { passive: true });
+          thumb.addEventListener("touchend", cancelPress);
+          thumb.addEventListener("touchcancel", cancelPress);
+          thumb.addEventListener("mousedown", function (e) {
+            if (e.button !== 0) return;
+            startPress();
+          });
+          thumb.addEventListener("mouseup", cancelPress);
         }
 
-        del.addEventListener("click", function (e) {
-          e.stopPropagation();
-          if (!canDeleteSouvenir(item)) return;
-          var id = Number(wrap.dataset.id);
-          var next = loadSouvenirs().filter(function (x) {
-            return x.id !== id;
-          });
-          saveSouvenirs(next);
-          render();
+        thumb.addEventListener("contextmenu", function (e) {
+          e.preventDefault();
         });
 
         grid.appendChild(wrap);
@@ -224,52 +292,63 @@
   }
 
   function openModal() {
+    var id = getMonIdentite();
+    if (!id) {
+      alert("Crée d’abord ton identité depuis l’accueil du portail (home).");
+      return;
+    }
+    if (elModalIdentiteDisplay) elModalIdentiteDisplay.textContent = id;
     overlay.classList.add("is-open");
-    stepPrenom.classList.remove("hidden");
-    stepSource.classList.add("hidden");
-    var last = localStorage.getItem(KEY_PRENOM) || "";
-    inputPrenom.value = last;
-    inputPrenom.focus();
-  }
-
-  function closeModal() {
-    overlay.classList.remove("is-open");
-    stepPrenom.classList.remove("hidden");
-    stepSource.classList.add("hidden");
+    if (stepSource) stepSource.classList.remove("hidden");
     inputCamera.value = "";
     inputGallery.value = "";
   }
 
-  function goSourceStep() {
-    var name = (inputPrenom.value || "").trim();
-    if (!name) {
-      inputPrenom.focus();
-      return;
-    }
-    stepPrenom.classList.add("hidden");
-    stepSource.classList.remove("hidden");
+  function closeModal() {
+    overlay.classList.remove("is-open");
+    if (stepSource) stepSource.classList.remove("hidden");
+    inputCamera.value = "";
+    inputGallery.value = "";
   }
 
   function handleFile(file) {
-    if (!file || !file.type.match(/^image\//)) {
-      alert("Veuillez choisir une image.");
+    if (!file) return;
+    if (!file.type || !file.type.match(/^image\//)) {
+      alert(
+        "Ce fichier n’est pas reconnu comme une image (types acceptés : JPG, PNG, GIF, WebP, etc.). Les PDF ou documents sont refusés."
+      );
       return;
     }
-    var prenom = (inputPrenom.value || "").trim();
-    if (!prenom) return;
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert(
+        "Photo trop lourde (max. environ 12 Mo). Réduis la taille ou choisis une autre image."
+      );
+      return;
+    }
+    var identite = getMonIdentite();
+    if (!identite) {
+      alert("Identité manquante. Retourne sur l’accueil pour te créer un profil.");
+      return;
+    }
 
     var reader = new FileReader();
+    reader.onerror = function () {
+      alert("Impossible de lire ce fichier. Réessaie avec une photo JPG ou PNG.");
+    };
     reader.onload = function () {
       var dataUrl = reader.result;
+      if (typeof dataUrl !== "string" || dataUrl.length < 32) {
+        alert("Import incomplet. Réessaie avec une autre photo.");
+        return;
+      }
       var arr = loadSouvenirs();
       arr.push({
         id: Date.now(),
-        prenom: prenom,
+        identite: identite,
         image: dataUrl,
         date: formatDate(new Date()),
       });
       saveSouvenirs(arr);
-      localStorage.setItem(KEY_PRENOM, prenom);
       closeModal();
       inputCamera.value = "";
       inputGallery.value = "";
@@ -292,15 +371,9 @@
     });
   }
 
-  btnPrenomOk.addEventListener("click", goSourceStep);
-  btnPrenomCancel.addEventListener("click", closeModal);
-
-  inputPrenom.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      goSourceStep();
-    }
-  });
+  if (btnAddCancel) {
+    btnAddCancel.addEventListener("click", closeModal);
+  }
 
   btnSourceCamera.addEventListener("click", function () {
     inputCamera.click();
@@ -321,20 +394,17 @@
   });
 
   document.addEventListener("click", function (e) {
-    if (
-      !e.target.closest(".souvenir-item") &&
-      !e.target.closest("#fab-galerie") &&
-      !e.target.closest("#btn-open-admin") &&
-      !e.target.closest("#admin-badge") &&
-      !e.target.closest("#galerie-lightbox")
-    ) {
-      clearLongPressState();
-    }
+    if (Date.now() < menuOpenGuardUntil) return;
+    if (e.target.closest(".souvenir-item__menu-btn")) return;
+    clearLongPressState();
   });
 
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && lightbox && lightbox.classList.contains("is-open")) {
-      closeLightbox();
+    if (e.key === "Escape") {
+      clearLongPressState();
+      if (lightbox && lightbox.classList.contains("is-open")) {
+        closeLightbox();
+      }
     }
   });
 
@@ -348,6 +418,11 @@
       e.stopPropagation();
       closeLightbox();
     });
+  }
+
+  if (lightboxImg) {
+    lightboxImg.setAttribute("draggable", "false");
+    blockImageContextAndDrag(lightboxImg);
   }
 
   var teamRow = document.querySelector(".team-row");
@@ -371,12 +446,12 @@
 
   if (grid) {
     grid.addEventListener("click", function (e) {
-      if (e.target.closest(".souvenir-item__del")) return;
+      if (e.target.closest(".souvenir-item__menu")) return;
       var cell = e.target.closest(".souvenir-item");
-      if (!cell || cell.classList.contains("show-delete")) return;
-      if (e.target !== cell.querySelector("img")) return;
-      var img = cell.querySelector("img");
-      if (img && img.getAttribute("src")) openLightbox(img.src);
+      if (!cell || cell.classList.contains("show-menu")) return;
+      var img = cell.querySelector(".souvenir-item__thumb img");
+      if (!img || e.target !== img) return;
+      if (img.getAttribute("src")) openLightbox(img.src);
     });
   }
 

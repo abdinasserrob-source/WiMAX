@@ -15,7 +15,7 @@
           </svg>
         </button>
         <h1 class="page-header__title">Scénarios</h1>
-        <span class="page-header__balance" aria-hidden="true"></span>
+        <div data-identite-slot aria-live="polite"></div>
       </header>
 
       <div class="scenarios-hero">
@@ -61,6 +61,7 @@
       </footer>
     </div>
 
+    <script src="js/identite.js"></script>
     <script>
       document.body.classList.add("page-enter");
       requestAnimationFrame(function () {

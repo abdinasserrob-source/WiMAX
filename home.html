@@ -8,8 +8,9 @@
   </head>
   <body class="page-home">
     <div class="app-shell app-shell--home">
-      <header class="page-header page-header--white page-header--home page-header--title-only">
+      <header class="page-header page-header--white page-header--home page-header--title-only page-header--with-identite">
         <h1 class="page-header__title">WiMAX Portal</h1>
+        <div data-identite-slot aria-live="polite"></div>
       </header>
 
       <section class="home-hero" aria-label="Identité WiMAX">
@@ -128,6 +129,7 @@
       </a>
     </div>
 
+    <script src="js/identite.js"></script>
     <script>
       document.body.classList.add("page-enter");
       requestAnimationFrame(function () {

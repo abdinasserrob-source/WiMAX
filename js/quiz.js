@@ -1,166 +1,29 @@
 /**
- * Quiz WiMAX — 15 questions, 10 tirées au sort par session.
+ * Quiz WiMAX — 100 QCM, 10 tirés / session.
+ * Classement partagé : Firebase Realtime Database (clé classement/).
  */
 (function () {
   var STORAGE_ARCHIVE = "wimax_quiz_archives";
+  var SESSION_SIZE = 10;
 
-  var QUESTIONS = [
-    {
-      q: "Quelle norme IEEE est associée au WiMAX ?",
-      options: ["802.11", "802.16", "802.3", "802.15"],
-      correct: 1,
-      hint: "Le WiMAX repose sur la famille IEEE 802.16 pour les réseaux métropolitains sans fil.",
-    },
-    {
-      q: "Quelle bande est souvent utilisée pour le WiMAX licencié en extérieur ?",
-      options: ["2,4 GHz (ISM)", "3,5 GHz", "900 MHz FM", "60 GHz mmWave"],
-      correct: 1,
-      hint: "La bande 3,5 GHz offre un bon compromis entre portée et capacité pour les déploiements outdoor.",
-    },
-    {
-      q: "Que signifie principalement l'OFDM dans ce contexte ?",
-      options: [
-        "Un protocole de routage IP",
-        "Une modulation multi-porteuses résistante aux évanouissements",
-        "Un algorithme de chiffrement symétrique",
-        "Un format de compression vidéo",
-      ],
-      correct: 1,
-      hint: "L'OFDM répartit les données sur de nombreuses sous-porteuses orthogonales.",
-    },
-    {
-      q: "Le WiMAX fixe (802.16d) vise surtout :",
-      options: [
-        "Les liaisons satellite géostationnaires",
-        "L'accès résidentiel / entreprise avec antenne extérieure",
-        "Le Bluetooth basse consommation",
-        "Le câblage cuivre DSL",
-      ],
-      correct: 1,
-      hint: "Le profil fixe sert typiquement au dernier kilomètre sans fil.",
-    },
-    {
-      q: "Le handover concerne principalement :",
-      options: [
-        "Le changement de fréquence Wi-Fi domestique",
-        "Le passage d'une cellule à une autre sans couper la session",
-        "La conversion analogique-numérique",
-        "La mise à jour du firmware du modem",
-      ],
-      correct: 1,
-      hint: "Le handover permet la continuité de service en mobilité (profil mobile).",
-    },
-    {
-      q: "La QoS dans WiMAX sert à :",
-      options: [
-        "Augmenter automatiquement la puissance du Wi-Fi domestique",
-        "Classer et prioriser les flux (voix, vidéo, données)",
-        "Remplacer le DNS",
-        "Mesurer uniquement la température du matériel",
-      ],
-      correct: 1,
-      hint: "Des classes comme UGS, rtPS ou nrtPS permettent d'allouer la bande selon les besoins.",
-    },
-    {
-      q: "Non line of sight (NLOS) signifie :",
-      options: [
-        "Liaison uniquement avec visibilité optique parfaite",
-        "Propagation possible malgré des obstacles partiels",
-        "Absence totale de signal",
-        "Connexion par fibre optique",
-      ],
-      correct: 1,
-      hint: "Les schémas MIMO et certaines bandes aident à traverser un urbanisme complexe.",
-    },
-    {
-      q: "Par rapport au LTE grand public, le WiMAX :",
-      options: [
-        "Est toujours le standard dominant des smartphones en 2026",
-        "A souvent été un concurrent historique pour l'accès sans fil à large couverture",
-        "N'utilise jamais de spectre licencié",
-        "Est identique au Zigbee",
-      ],
-      correct: 1,
-      hint: "Sur le marché, le LTE/5G a largement pris le relais, mais le WiMAX reste un cas d'étude pédagogique.",
-    },
-    {
-      q: "Un SS (Subscriber Station) est :",
-      options: [
-        "Le routeur cœur du FAI au niveau national",
-        "L'équipement côté abonné qui dialogue avec la BS",
-        "Un serveur de messagerie",
-        "Un câble coaxial",
-      ],
-      correct: 1,
-      hint: "La station de base (BS) et les SS forment l'architecture point à multipoint.",
-    },
-    {
-      q: "La portée typique annoncée pour certains liens WiMAX peut atteindre :",
-      options: ["Quelques mètres seulement", "Jusqu'à plusieurs dizaines de km en conditions favorables", "Uniquement 50 cm", "L'orbite lunaire"],
-      correct: 1,
-      hint: "Les liaisons longue portée dépendent de la bande, de la puissance et du relief.",
-    },
-    {
-      q: "Le duplexage TDD signifie :",
-      options: [
-        "Montant et descendant sur des fréquences séparées uniquement",
-        "Montant et descendant partagent la même fréquence dans le temps",
-        "Pas de lien montant possible",
-        "Double câble Ethernet obligatoire",
-      ],
-      correct: 1,
-      hint: "En TDD, des créneaux temporels alternent émission et réception.",
-    },
-    {
-      q: "PKM dans le contexte 802.16 concerne surtout :",
-      options: [
-        "La gestion des clés et l'authentification des équipements",
-        "La couleur des antennes",
-        "Un protocole de streaming musical",
-        "La facturation de l'électricité",
-      ],
-      correct: 0,
-      hint: "Privacy Key Management assure l'échange sécurisé des paramètres de chiffrement.",
-    },
-    {
-      q: "Le débit utile perçu par l'utilisateur dépend notamment de :",
-      options: [
-        "Uniquement de la couleur du logo de l'opérateur",
-        "La charge de la cellule, le MCS et les retransmissions",
-        "L'heure du jour uniquement",
-        "Le type de prise murale",
-      ],
-      correct: 1,
-      hint: "Le MCS (modulation and coding scheme) s'adapte aux conditions radio.",
-    },
-    {
-      q: "WiMAX peut être pertinent pour illustrer :",
-      options: [
-        "Les réseaux LPWAN pour capteurs à très bas débit",
-        "Le dernier kilomètre rural ou les liaisons backhaul sans tranchée",
-        "Uniquement le NFC pour paiement contact",
-        "Le HDMI des téléviseurs",
-      ],
-      correct: 1,
-      hint: "Les zones peu denses profitent d'une couverture large sans fibre jusqu'à l'abonné.",
-    },
-    {
-      q: "La latence est importante pour :",
-      options: [
-        "Les transferts FTP batch uniquement hors ligne",
-        "La voix sur IP, la visioconférence et le jeu en ligne",
-        "Le stockage magnétique sur bande",
-        "L'impression matricielle",
-      ],
-      correct: 1,
-      hint: "Une latence faible améliore l'interactivité des applications temps réel.",
-    },
-  ];
+  var QUESTIONS = window.WIMAX_QUIZ_QUESTIONS || [];
+  if (!QUESTIONS.length) {
+    console.error("WIMAX_QUIZ_QUESTIONS manquant : chargez js/quiz-questions.js avant quiz.js");
+  }
 
-  function shuffle(arr) {
-    var a = arr.slice();
+  function randBelow(n) {
+    if (n <= 0) return 0;
+    if (window.crypto && crypto.getRandomValues) {
+      var buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      return buf[0] % n;
+    }
+    return Math.floor(Math.random() * n);
+  }
+
+  function shuffleInPlace(a) {
     for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
+      var j = randBelow(i + 1);
       var t = a[i];
       a[i] = a[j];
       a[j] = t;
@@ -168,12 +31,159 @@
     return a;
   }
 
-  function pickQuestions() {
-    var idx = shuffle(QUESTIONS.map(function (_, i) { return i; })).slice(0, 10);
-    return idx.map(function (i) { return QUESTIONS[i]; });
+  function pickQuestionIndices(excludeIds) {
+    var excludeMap = {};
+    (excludeIds || []).forEach(function (id) {
+      excludeMap[id] = true;
+    });
+    var pool = [];
+    for (var i = 0; i < QUESTIONS.length; i++) {
+      if (!excludeMap[i]) pool.push(i);
+    }
+    if (pool.length < SESSION_SIZE) {
+      pool = [];
+      for (var j = 0; j < QUESTIONS.length; j++) pool.push(j);
+    }
+    shuffleInPlace(pool);
+    return pool.slice(0, SESSION_SIZE);
+  }
+
+  function nowDateStr() {
+    var d = new Date();
+    return (
+      d.getFullYear() +
+      "-" +
+      String(d.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(d.getDate()).padStart(2, "0") +
+      " " +
+      String(d.getHours()).padStart(2, "0") +
+      ":" +
+      String(d.getMinutes()).padStart(2, "0")
+    );
+  }
+
+  function formatDateFR(d) {
+    var day = String(d.getDate()).padStart(2, "0");
+    var mo = String(d.getMonth() + 1).padStart(2, "0");
+    return day + "/" + mo + "/" + d.getFullYear();
+  }
+
+  function getMonID() {
+    if (typeof window.__WIMAX_getMonID === "function") {
+      return window.__WIMAX_getMonID();
+    }
+    var monID = localStorage.getItem("monID");
+    if (!monID) {
+      monID = Date.now().toString(36) + Math.random().toString(36).substr(2);
+      localStorage.setItem("monID", monID);
+    }
+    return monID;
+  }
+
+  /** Une ligne par entrée Firebase (clé = monID appareil). Pas de fusion par identité. */
+  function rowsFromFirebaseVal(val) {
+    var rows = [];
+    if (!val || typeof val !== "object") return rows;
+    Object.keys(val).forEach(function (k) {
+      var o = val[k] || {};
+      if (o.identite == null || String(o.identite).trim() === "") return;
+      if (o.score == null || o.score === "") return;
+      rows.push({
+        deviceId: k,
+        identite: String(o.identite),
+        score: Number(o.score),
+        total: Number(o.total) || SESSION_SIZE,
+        date: String(o.date || ""),
+      });
+    });
+    return rows;
+  }
+
+  /**
+   * Clé Firebase = monID (cet appareil uniquement).
+   * @param {function} cb — (result: { ok, message?, updated? })
+   */
+  function publishScoreToFirebase(identite, score, total, cb) {
+    var db = window.__WIMAX_FB_DB;
+    if (!db) {
+      cb({ ok: false, message: "Firebase indisponible. Vérifie la connexion et les scripts." });
+      return;
+    }
+    var monID = getMonID();
+    if (!monID) {
+      cb({ ok: false, message: "Identifiant appareil indisponible." });
+      return;
+    }
+    var ref = db.ref("classement").child(monID);
+    var dateStr = formatDateFR(new Date());
+    ref
+      .once("value")
+      .then(function (snap) {
+        if (!snap.exists()) {
+          return ref
+            .set({
+              id: monID,
+              identite: identite,
+              score: score,
+              total: total,
+              date: dateStr,
+            })
+            .then(
+              function () {
+                cb({ ok: true, message: "✅ Score publié !", updated: true });
+              },
+              function (err) {
+                cb({ ok: false, message: (err && err.message) || "Erreur Firebase." });
+              }
+            );
+        }
+        var v = snap.val() || {};
+        var prevScore = Number(v.score);
+        var prevTotal = Number(v.total) || total;
+        if (score > prevScore) {
+          return ref
+            .update({
+              id: monID,
+              identite: identite,
+              score: score,
+              total: total,
+              date: dateStr,
+            })
+            .then(
+              function () {
+                cb({
+                  ok: true,
+                  message: "🎉 Nouveau record ! " + score + "/" + total,
+                  updated: true,
+                });
+              },
+              function (err) {
+                cb({ ok: false, message: (err && err.message) || "Erreur mise à jour." });
+              }
+            );
+        }
+        if (score < prevScore) {
+          cb({
+            ok: true,
+            message: "Ton meilleur score reste " + prevScore + "/" + prevTotal,
+            updated: false,
+          });
+          return;
+        }
+        cb({
+          ok: true,
+          message: "Score identique (" + score + "/" + total + ").",
+          updated: false,
+        });
+      })
+      .catch(function (err) {
+        cb({ ok: false, message: (err && err.message) || "Erreur réseau Firebase." });
+      });
   }
 
   var state = {
+    sessionIds: [],
     session: [],
     index: 0,
     score: 0,
@@ -197,6 +207,122 @@
   var elBadge = document.getElementById("quiz-badge");
   var elFeedbackTitle = document.getElementById("quiz-feedback-title");
   var elFeedbackDesc = document.getElementById("quiz-feedback-desc");
+  var elArchivesList = document.getElementById("quiz-archives-list");
+  var elArchivesEmpty = document.getElementById("quiz-archives-empty");
+  var elArchiveToast = document.getElementById("quiz-archive-toast");
+  var archiveToastTimer = null;
+
+  var elClassementMsg = document.getElementById("quiz-classement-msg");
+  var elClassementModal = document.getElementById("quiz-classement-view-modal");
+  var elClassementBackdrop = document.getElementById("quiz-classement-view-backdrop");
+  var elClassementList = document.getElementById("quiz-classement-view-list");
+  var classementFbHandler = null;
+
+  function loadArchivesFromStorage() {
+    var raw = localStorage.getItem(STORAGE_ARCHIVE);
+    var list = [];
+    try {
+      list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) list = [];
+    } catch (e) {
+      list = [];
+    }
+    return list;
+  }
+
+  function renderArchivesUI() {
+    if (!elArchivesList || !elArchivesEmpty) return;
+    var list = loadArchivesFromStorage();
+    elArchivesList.innerHTML = "";
+    if (!list.length) {
+      elArchivesEmpty.classList.remove("hidden");
+      return;
+    }
+    elArchivesEmpty.classList.add("hidden");
+    list
+      .slice()
+      .reverse()
+      .forEach(function (entry) {
+        var li = document.createElement("li");
+        li.className = "quiz-archives__item";
+        li.textContent = entry.date + " — " + entry.score + "/" + entry.total;
+        elArchivesList.appendChild(li);
+      });
+  }
+
+  function clearClassementMsg() {
+    if (!elClassementMsg) return;
+    elClassementMsg.textContent = "";
+    elClassementMsg.classList.add("hidden");
+  }
+
+  function showClassementMsg(text) {
+    if (!elClassementMsg || !text) return;
+    elClassementMsg.textContent = text;
+    elClassementMsg.classList.remove("hidden");
+  }
+
+  function fillClassementViewListSnapshot(snap) {
+    if (!elClassementList) return;
+    var val = snap.val();
+    var rows = rowsFromFirebaseVal(val);
+    rows.sort(function (a, b) {
+      if (b.score !== a.score) return b.score - a.score;
+      return String(b.date || "").localeCompare(String(a.date || ""));
+    });
+    elClassementList.innerHTML = "";
+    var myDeviceId = getMonID();
+    if (!rows.length) {
+      var empty = document.createElement("li");
+      empty.className = "quiz-classement-view__empty";
+      empty.textContent = "Aucun score publié pour l’instant.";
+      elClassementList.appendChild(empty);
+      return;
+    }
+    var medals = ["🥇", "🥈", "🥉"];
+    rows.forEach(function (e, i) {
+      var li = document.createElement("li");
+      li.className = "quiz-classement-view__row";
+      if (myDeviceId && e.deviceId === myDeviceId) li.classList.add("quiz-classement-view__row--me");
+      var prefix = i < 3 ? medals[i] + " " : "    ";
+      li.textContent = prefix + e.identite + "     " + e.score + "/" + e.total;
+      elClassementList.appendChild(li);
+    });
+  }
+
+  function openClassementViewModal() {
+    if (!elClassementModal) return;
+    elClassementModal.classList.add("is-open");
+    elClassementModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    var db = window.__WIMAX_FB_DB;
+    if (!db) {
+      if (elClassementList) {
+        elClassementList.innerHTML = "";
+        var liErr = document.createElement("li");
+        liErr.className = "quiz-classement-view__empty";
+        liErr.textContent = "Firebase indisponible.";
+        elClassementList.appendChild(liErr);
+      }
+      return;
+    }
+    classementFbHandler = function (snap) {
+      fillClassementViewListSnapshot(snap);
+    };
+    db.ref("classement").on("value", classementFbHandler);
+  }
+
+  function closeClassementViewModal() {
+    var db = window.__WIMAX_FB_DB;
+    if (db && classementFbHandler) {
+      db.ref("classement").off("value", classementFbHandler);
+      classementFbHandler = null;
+    }
+    if (!elClassementModal) return;
+    elClassementModal.classList.remove("is-open");
+    elClassementModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
 
   function showPlay() {
     elPlay.classList.remove("hidden");
@@ -206,6 +332,7 @@
   function showResult() {
     elPlay.classList.add("hidden");
     elResult.classList.remove("hidden");
+    clearClassementMsg();
     var total = state.session.length;
     elScoreNum.textContent = state.score + "/" + total;
 
@@ -225,6 +352,7 @@
       elFeedbackDesc.textContent =
         "Revoyez les scénarios pédagogiques et rejouez le quiz pour renforcer vos acquis.";
     }
+    renderArchivesUI();
   }
 
   function updateProgress() {
@@ -236,46 +364,24 @@
     elBar.style.width = pct + "%";
   }
 
-  function renderQuestion() {
-    var q = state.session[state.index];
-    state.answered = false;
-    state.selectedWrong = -1;
-    elQuestion.textContent = q.q;
-    elHint.classList.add("hidden");
-    elNextWrap.classList.add("hidden");
-    elOptions.innerHTML = "";
-
-    q.options.forEach(function (opt, i) {
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "quiz-option";
-      btn.innerHTML =
-        '<span class="quiz-option__letter">' +
-        String.fromCharCode(65 + i) +
-        "</span><span>" +
-        opt +
-        "</span>";
-      btn.addEventListener("click", function () {
-        onPick(i, btn);
-      });
-      elOptions.appendChild(btn);
-    });
-    updateProgress();
-  }
-
-  function onPick(choice, btn) {
+  function onPick(choiceOriginalIndex, btn) {
     if (state.answered) return;
-    var q = state.session[state.index];
+    var q = state._raw;
     state.answered = true;
     var buttons = elOptions.querySelectorAll(".quiz-option");
 
-    if (choice === q.correct) {
+    var correctOriginal = q.correct;
+    if (choiceOriginalIndex === correctOriginal) {
       state.score++;
       btn.classList.add("quiz-option--correct");
     } else {
-      state.selectedWrong = choice;
+      state.selectedWrong = choiceOriginalIndex;
       btn.classList.add("quiz-option--wrong");
-      buttons[q.correct].classList.add("quiz-option--correct");
+      buttons.forEach(function (b) {
+        if (b === btn) return;
+        var orig = parseInt(b.getAttribute("data-orig"), 10);
+        if (orig === correctOriginal) b.classList.add("quiz-option--correct");
+      });
     }
 
     buttons.forEach(function (b) {
@@ -289,6 +395,40 @@
     updateProgress();
   }
 
+  function renderQuestionWithDataOrig() {
+    var raw = state.session[state.index];
+    state.answered = false;
+    state.selectedWrong = -1;
+    elQuestion.textContent = raw.q;
+    elHint.classList.add("hidden");
+    elNextWrap.classList.add("hidden");
+    elOptions.innerHTML = "";
+
+    var order = [0, 1, 2, 3];
+    shuffleInPlace(order);
+
+    order.forEach(function (origIdx, pos) {
+      var opt = raw.options[origIdx];
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "quiz-option";
+      btn.setAttribute("data-orig", String(origIdx));
+      btn.innerHTML =
+        '<span class="quiz-option__letter">' +
+        String.fromCharCode(65 + pos) +
+        "</span><span>" +
+        opt +
+        "</span>";
+      btn.addEventListener("click", function () {
+        onPick(origIdx, btn);
+      });
+      elOptions.appendChild(btn);
+    });
+
+    state._raw = raw;
+    updateProgress();
+  }
+
   function next() {
     if (!state.answered) return;
     if (state.index + 1 >= state.session.length) {
@@ -296,49 +436,51 @@
       return;
     }
     state.index++;
-    renderQuestion();
+    renderQuestionWithDataOrig();
   }
 
-  function startSession() {
-    state.session = pickQuestions();
+  function startSession(excludeIds) {
+    if (!QUESTIONS.length) return;
+    state.sessionIds = pickQuestionIndices(excludeIds);
+    state.session = state.sessionIds.map(function (i) {
+      return QUESTIONS[i];
+    });
     state.index = 0;
     state.score = 0;
     showPlay();
-    renderQuestion();
+    renderQuestionWithDataOrig();
   }
 
   function archiveScore() {
-    var raw = localStorage.getItem(STORAGE_ARCHIVE);
-    var list = [];
-    try {
-      list = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(list)) list = [];
-    } catch (e) {
-      list = [];
-    }
-    var d = new Date();
-    var dateStr =
-      d.getFullYear() +
-      "-" +
-      String(d.getMonth() + 1).padStart(2, "0") +
-      "-" +
-      String(d.getDate()).padStart(2, "0") +
-      " " +
-      String(d.getHours()).padStart(2, "0") +
-      ":" +
-      String(d.getMinutes()).padStart(2, "0");
+    var list = loadArchivesFromStorage();
+    var dateStr = nowDateStr();
     list.push({
       score: state.score,
       total: state.session.length,
       date: dateStr,
     });
     localStorage.setItem(STORAGE_ARCHIVE, JSON.stringify(list));
-    alert("Score archivé le " + dateStr);
+    renderArchivesUI();
+    if (elArchiveToast) {
+      elArchiveToast.textContent = "Partie enregistrée : " + dateStr + " — " + state.score + "/" + state.session.length + ".";
+      elArchiveToast.classList.remove("hidden");
+      if (archiveToastTimer) clearTimeout(archiveToastTimer);
+      archiveToastTimer = setTimeout(function () {
+        elArchiveToast.classList.add("hidden");
+        archiveToastTimer = null;
+      }, 5000);
+    }
   }
 
   function shareScore() {
+    var id = window.WiMAXIdentite && window.WiMAXIdentite.get ? window.WiMAXIdentite.get() : "";
     var text =
-      "J'ai obtenu " + state.score + "/" + state.session.length + " au Quiz WiMAX sur le portail !";
+      (id ? id + " — " : "") +
+      "J'ai obtenu " +
+      state.score +
+      "/" +
+      state.session.length +
+      " au Quiz WiMAX (10 questions tirées parmi 100) !";
     if (navigator.share) {
       navigator
         .share({
@@ -357,10 +499,48 @@
   document.getElementById("quiz-share-btn").addEventListener("click", shareScore);
   document.getElementById("quiz-archive-btn").addEventListener("click", archiveScore);
   document.getElementById("quiz-replay-btn").addEventListener("click", function () {
-    startSession();
+    var previousIds = state.sessionIds && state.sessionIds.length ? state.sessionIds.slice() : [];
+    startSession(previousIds);
   });
 
-  startSession();
+  var btnPublish = document.getElementById("quiz-publish-score-btn");
+  var btnVoirClassement = document.getElementById("quiz-voir-classement-btn");
+  var btnClassementClose = document.getElementById("quiz-classement-close");
+
+  if (btnPublish) {
+    btnPublish.addEventListener("click", function () {
+      var identite = window.WiMAXIdentite && window.WiMAXIdentite.get ? window.WiMAXIdentite.get() : "";
+      if (!identite) {
+        alert("Crée d’abord ton identité depuis l’accueil du portail WiMAX (home).");
+        return;
+      }
+      publishScoreToFirebase(identite, state.score, state.session.length, function (res) {
+        if (!res.ok) {
+          if (res.message) alert(res.message);
+          return;
+        }
+        if (res.message) showClassementMsg(res.message);
+      });
+    });
+  }
+  if (btnVoirClassement) {
+    btnVoirClassement.addEventListener("click", openClassementViewModal);
+  }
+  if (elClassementBackdrop) {
+    elClassementBackdrop.addEventListener("click", closeClassementViewModal);
+  }
+  if (btnClassementClose) {
+    btnClassementClose.addEventListener("click", closeClassementViewModal);
+  }
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key !== "Escape") return;
+    if (elClassementModal && elClassementModal.classList.contains("is-open")) {
+      closeClassementViewModal();
+    }
+  });
+
+  startSession([]);
 
   document.body.classList.add("page-enter");
   requestAnimationFrame(function () {

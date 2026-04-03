@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Quiz WiMAX</title>
     <link rel="stylesheet" href="css/style.css" />
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/identite.js"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -15,10 +19,15 @@
           </svg>
         </button>
         <h1 class="page-header__title">Quiz WiMAX</h1>
-        <span class="page-header__balance" aria-hidden="true"></span>
+        <div data-identite-slot aria-live="polite"></div>
       </header>
 
       <div id="quiz-play">
+        <p class="quiz-intro">
+          Banque de <strong>100 QCM</strong> (10 thèmes × 10), alignés sur le rapport WiMAX. Chaque session tire
+          <strong>10 questions au hasard</strong> — les réponses sont aussi mélangées. « Rejouer » évite de reprendre les mêmes
+          questions que la partie précédente.
+        </p>
         <div class="quiz-progress-text">
           <span id="quiz-progress-label">Question 1/10</span>
           <strong id="quiz-progress-pct">0% complété</strong>
@@ -56,29 +65,26 @@
           <p id="quiz-feedback-desc"></p>
         </div>
 
+        <p class="quiz-classement-msg hidden" id="quiz-classement-msg" role="status" aria-live="polite"></p>
+
         <div class="quiz-actions">
-          <button type="button" class="btn-primary" id="quiz-share-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path
-                d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"
-              />
-            </svg>
-            Partager le score
-          </button>
-          <button type="button" class="btn-secondary" id="quiz-archive-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" />
-            </svg>
-            Archiver
-          </button>
-          <button type="button" class="btn-muted" id="quiz-replay-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path
-                d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
-              />
-            </svg>
-            Rejouer
-          </button>
+          <button type="button" class="btn-primary" id="quiz-publish-score-btn">🏆 Publier mon score</button>
+          <button type="button" class="btn-muted quiz-btn-classement" id="quiz-voir-classement-btn">📊 Voir le classement</button>
+          <button type="button" class="btn-secondary" id="quiz-replay-btn">🔄 Rejouer</button>
+          <button type="button" class="btn-secondary" id="quiz-share-btn">📤 Partager</button>
+        </div>
+        <div class="quiz-actions quiz-actions--secondary">
+          <button type="button" class="btn-muted btn-archive-inline" id="quiz-archive-btn">Archiver cette partie (local)</button>
+        </div>
+
+        <div class="quiz-archives" id="quiz-archives-panel" aria-labelledby="quiz-archives-heading">
+          <h3 class="quiz-archives__title" id="quiz-archives-heading">Mes archives</h3>
+          <p class="quiz-archives__note">
+            Archives : sur <strong>ce navigateur</strong> uniquement. Le <strong>classement</strong> affiché via « Voir le classement » est partagé en ligne (Firebase).
+          </p>
+          <p class="quiz-archive-toast hidden" id="quiz-archive-toast" role="status" aria-live="polite"></p>
+          <p class="quiz-archives__empty" id="quiz-archives-empty">Aucune partie archivée pour l’instant — cliquez sur « Archiver » après un quiz.</p>
+          <ul class="quiz-archives__list" id="quiz-archives-list"></ul>
         </div>
 
         <div class="quiz-saviez">
@@ -96,6 +102,21 @@
       </div>
     </div>
 
+    <div class="quiz-lb-modal" id="quiz-classement-view-modal" aria-hidden="true">
+      <div class="quiz-lb-modal__backdrop" id="quiz-classement-view-backdrop"></div>
+      <div class="quiz-lb-modal__box quiz-classement-view__box" role="dialog" aria-labelledby="quiz-classement-view-title" aria-modal="true">
+        <h3 id="quiz-classement-view-title">🏆 Classement WiMAX</h3>
+        <p class="quiz-classement-view__subtitle">
+          Tous les scores (tri du meilleur au plus bas), temps réel — Firebase. Même pseudo sur deux téléphones = deux lignes. Ta ligne (cet appareil) est surlignée.
+        </p>
+        <ol class="quiz-classement-view__list" id="quiz-classement-view-list"></ol>
+        <div class="quiz-classement-view__footer">
+          <button type="button" class="btn-primary" id="quiz-classement-close">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/quiz-questions.js"></script>
     <script src="js/quiz.js"></script>
   </body>
 </html>

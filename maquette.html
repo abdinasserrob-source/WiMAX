@@ -15,7 +15,7 @@
           </svg>
         </button>
         <h1 class="page-header__title">Maquette</h1>
-        <span class="page-header__balance" aria-hidden="true"></span>
+        <div data-identite-slot aria-live="polite"></div>
       </header>
 
       <p class="label-caps">Documentation technique</p>
@@ -38,6 +38,7 @@
       </div>
     </div>
 
+    <script src="js/identite.js"></script>
     <script>
       document.body.classList.add("page-enter");
       requestAnimationFrame(function () {

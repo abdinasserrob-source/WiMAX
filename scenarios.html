@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scénarios WiMAX</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="page-header">
+        <button type="button" class="btn-back" onclick="history.back()" aria-label="Retour">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <h1 class="page-header__title">Scénarios</h1>
+        <span class="page-header__balance" aria-hidden="true"></span>
+      </header>
+
+      <div class="scenarios-hero">
+        <p class="label-caps">Module d'apprentissage</p>
+        <h2>Explorez l'écosystème</h2>
+        <span class="wimax-accent">WiMAX</span>
+      </div>
+
+      <nav class="scenario-list" aria-label="Liste des scénarios">
+        <a class="scenario-card" href="scenario-detail.html?id=1">
+          <div class="scenario-card__body">
+            <p class="scenario-card__title">Comment fonctionne le WiMAX</p>
+            <p class="scenario-card__sub">Principes fondamentaux de l'accès hertzien</p>
+          </div>
+          <span class="scenario-card__chev" aria-hidden="true">›</span>
+        </a>
+        <a class="scenario-card" href="scenario-detail.html?id=2">
+          <div class="scenario-card__body">
+            <p class="scenario-card__title">Mesure de performance (débit, QoS)</p>
+            <p class="scenario-card__sub">Analyse technique des flux et latences</p>
+          </div>
+          <span class="scenario-card__chev" aria-hidden="true">›</span>
+        </a>
+        <a class="scenario-card" href="scenario-detail.html?id=3">
+          <div class="scenario-card__body">
+            <p class="scenario-card__title">WiMAX Mobile vs Fixe – Handover</p>
+            <p class="scenario-card__sub">Mobilité et continuité de service IEEE 802.16e</p>
+          </div>
+          <span class="scenario-card__chev" aria-hidden="true">›</span>
+        </a>
+        <a class="scenario-card" href="scenario-detail.html?id=4">
+          <div class="scenario-card__body">
+            <p class="scenario-card__title">Comparaison WiMAX / 4G / 5G</p>
+            <p class="scenario-card__sub">Benchmarks et positionnement stratégique</p>
+          </div>
+          <span class="scenario-card__chev" aria-hidden="true">›</span>
+        </a>
+      </nav>
+
+      <footer class="scenarios-footer">
+        WiMAX Editorial Portal • Laboratoire Réseaux<br />
+        2026
+      </footer>
+    </div>
+
+    <script>
+      document.body.classList.add("page-enter");
+      requestAnimationFrame(function () {
+        document.body.classList.add("page-enter-active");
+      });
+    </script>
+  </body>
+</html>

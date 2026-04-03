@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Détail scénario — WiMAX</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="page-header">
+        <button type="button" class="btn-back" onclick="history.back()" aria-label="Retour">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <h1 class="page-header__title" id="detail-title">Scénario</h1>
+        <span class="page-header__balance" aria-hidden="true"></span>
+      </header>
+
+      <div class="scenario-tabs" role="tablist" aria-label="Onglets scénario">
+        <button type="button" class="scenario-tab is-active" id="tab-desc" role="tab" aria-selected="true" aria-controls="panel-desc">
+          Description
+        </button>
+        <button type="button" class="scenario-tab" id="tab-demo" role="tab" aria-selected="false" aria-controls="panel-demo">
+          Démonstration
+        </button>
+      </div>
+
+      <section id="panel-desc" class="scenario-panel is-active" role="tabpanel" aria-labelledby="tab-desc">
+        <article class="card detail-desc">
+          <p class="label-caps">Description</p>
+          <p id="detail-text" style="margin: 0; color: var(--sous-texte); font-size: 0.92rem; line-height: 1.55"></p>
+        </article>
+
+        <div class="detail-extra">
+          <h3>Paramètres techniques (démo)</h3>
+          <ul id="detail-params">
+            <li>Latence indicative : 24 ms</li>
+            <li>Débit de crête : 150 Mbit/s</li>
+            <li>Chiffrement : AES-256 entreprise</li>
+          </ul>
+        </div>
+
+        <div class="detail-extra" style="margin-top: 16px">
+          <h3>Source du signal</h3>
+          <p style="margin: 0; font-size: 0.88rem; color: var(--sous-texte)">
+            Données illustratives issues d'un projet académique « télécommunications 2024 » — à adapter à votre maquette réelle.
+          </p>
+        </div>
+      </section>
+
+      <section id="panel-demo" class="scenario-panel" role="tabpanel" aria-labelledby="tab-demo">
+        <p class="label-caps">Démonstration</p>
+        <p class="demo-toolbar-hint">
+          <strong>Plein écran</strong> : agrandit la zone de démo sur tout l’écran (comme une vidéo). Touche <kbd>Échap</kbd> ou le même bouton pour revenir. La barre noire en bas venait souvent du format 16:9 dans la petite fenêtre — elle est corrigée ; utilisez aussi <strong>Pause</strong> dans la démo.
+        </p>
+        <div class="demo-toolbar">
+          <button type="button" class="demo-fs-btn" id="btn-demo-fs" aria-label="Agrandir la démonstration sur tout l’écran">
+            <span aria-hidden="true">⛶</span>
+            <span id="btn-demo-fs-text">Plein écran</span>
+          </button>
+        </div>
+        <div class="demo-iframe-wrap" id="detail-iframe-wrap">
+          <iframe
+            id="detail-demo-iframe"
+            src="assets/videos/scenario1-wimax.html"
+            title="Démonstration scénario"
+            allow="fullscreen"
+            allowfullscreen
+            style="width: 100%; height: 100%; min-height: 0; border: none; border-radius: 12px; display: block"
+          ></iframe>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        var scenarios = {
+          "1": {
+            title: "Comment fonctionne le WiMAX",
+            text:
+              "Le WiMAX (IEEE 802.16) fournit un accès sans fil sur de longues distances grâce à une station de base et des antennes clientes. Les ondes radio relient le cœur de réseau aux abonnés en zone dense ou rurale, avec une qualité de service paramétrable selon les flux (voix, données, vidéo).",
+          },
+          "2": {
+            title: "Mesure de performance (débit, QoS)",
+            text:
+              "Les ingénieurs mesurent le débit utile, la gigue et la perte de paquets sur des scénarios réalistes (point à multipoint, charge variable). La QoS permet de prioriser les applications sensibles à la latence tout en garantissant un débit minimum aux services critiques.",
+          },
+          "3": {
+            title: "WiMAX Mobile vs Fixe – Handover",
+            text:
+              "Le profil fixe (802.16d) cible l'Internet résidentiel et professionnel, tandis que le mobile (802.16e) ajoute la gestion de handover entre cellules. L'objectif est de maintenir la session lors des déplacements, comme pour un bus équipé ou un terminal nomade sur campus.",
+          },
+          "4": {
+            title: "Comparaison WiMAX / 4G / 5G",
+            text:
+              "WiMAX a précédé l'essor du LTE dans certains déploiements ; aujourd'hui, 4G/5G domine l'accès grand public. Le positionnement WiMAX reste pédagogique pour comprendre l'OFDM, la gestion des licences (ex. 3,5 GHz) et les compromis portée / capacité face aux réseaux cellulaires modernes.",
+          },
+        };
+
+        var paramsById = {
+          "1": ["Latence indicative : 28 ms", "Débit de crête : 120 Mbit/s", "Bande illustrée : 3,5 GHz"],
+          "2": ["Latence indicative : 24 ms", "Débit de crête : 150 Mbit/s", "QoS : classes UGS / rtPS / nrtPS"],
+          "3": ["Temps de handover cible : &lt; 50 ms", "Mobilité : jusqu'à 120 km/h (exemple)", "Sécurité : PKM, authentification mutuelle"],
+          "4": ["Comparatif : débit cellulaire vs LOS WiMAX", "Spectre : licencié vs ISM", "Cas d'usage : zones blanches, backhaul"],
+        };
+
+        var id = new URLSearchParams(window.location.search).get("id") || "1";
+        var data = scenarios[id] || scenarios["1"];
+        document.getElementById("detail-title").textContent = data.title;
+        document.title = data.title + " — WiMAX";
+        document.getElementById("detail-text").textContent = data.text;
+
+        var ul = document.getElementById("detail-params");
+        var lines = paramsById[id] || paramsById["1"];
+        ul.innerHTML = lines.map(function (l) { return "<li>" + l + "</li>"; }).join("");
+
+        var demoMap = {
+          "1": "assets/videos/scenario1-wimax.html",
+          "2": "assets/videos/scenario2-performance.html",
+          "3": "assets/videos/scenario3-handover.html",
+          "4": "assets/videos/scenario4-comparaison.html",
+        };
+        var iframe = document.getElementById("detail-demo-iframe");
+        iframe.src = demoMap[id] || demoMap["1"];
+        iframe.title = "Démonstration — " + (data.title || "Scénario");
+
+        var tabDesc = document.getElementById("tab-desc");
+        var tabDemo = document.getElementById("tab-demo");
+        var panelDesc = document.getElementById("panel-desc");
+        var panelDemo = document.getElementById("panel-demo");
+
+        function setTab(which) {
+          var isDesc = which === "desc";
+          tabDesc.classList.toggle("is-active", isDesc);
+          tabDemo.classList.toggle("is-active", !isDesc);
+          tabDesc.setAttribute("aria-selected", isDesc ? "true" : "false");
+          tabDemo.setAttribute("aria-selected", !isDesc ? "true" : "false");
+          panelDesc.classList.toggle("is-active", isDesc);
+          panelDemo.classList.toggle("is-active", !isDesc);
+        }
+
+        tabDesc.addEventListener("click", function () { setTab("desc"); });
+        tabDemo.addEventListener("click", function () { setTab("demo"); });
+
+        // Par défaut : l'utilisateur lit la description, sauf sur id=2 (démo interactive)
+        if (id === "2") setTab("demo");
+
+        var fsBtn = document.getElementById("btn-demo-fs");
+        var fsBtnText = document.getElementById("btn-demo-fs-text");
+        var fsTarget = document.getElementById("detail-iframe-wrap");
+
+        function isFs() {
+          return !!document.fullscreenElement;
+        }
+
+        function syncFsUi() {
+          if (!fsBtnText) return;
+          fsBtnText.textContent = isFs() ? "Quitter plein écran" : "Plein écran";
+        }
+
+        if (fsBtn && fsTarget) {
+          fsBtn.addEventListener("click", function () {
+            // Plein écran sur le conteneur (inclut le bouton de retour système)
+            var el = fsTarget;
+            if (!isFs()) {
+              if (el.requestFullscreen) el.requestFullscreen().catch(function () {});
+            } else {
+              if (document.exitFullscreen) document.exitFullscreen().catch(function () {});
+            }
+          });
+          document.addEventListener("fullscreenchange", syncFsUi);
+          syncFsUi();
+        }
+
+        document.body.classList.add("page-enter");
+        requestAnimationFrame(function () {
+          document.body.classList.add("page-enter-active");
+        });
+      })();
+    </script>
+  </body>
+</html>

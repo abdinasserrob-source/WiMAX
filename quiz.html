@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quiz WiMAX</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="page-header">
+        <button type="button" class="btn-back" onclick="history.back()" aria-label="Retour">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <h1 class="page-header__title">Quiz WiMAX</h1>
+        <span class="page-header__balance" aria-hidden="true"></span>
+      </header>
+
+      <div id="quiz-play">
+        <div class="quiz-progress-text">
+          <span id="quiz-progress-label">Question 1/10</span>
+          <strong id="quiz-progress-pct">0% complété</strong>
+        </div>
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-bar__fill" id="quiz-bar-fill" style="width: 0%"></div>
+        </div>
+
+        <p class="quiz-question" id="quiz-question"></p>
+        <div class="quiz-options" id="quiz-options"></div>
+
+        <div class="quiz-hint hidden" id="quiz-hint">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"
+            />
+          </svg>
+          <span id="quiz-hint-text"></span>
+        </div>
+
+        <div class="quiz-next-wrap hidden" id="quiz-next-wrap">
+          <button type="button" class="btn-primary" id="quiz-next-btn">Question suivante</button>
+        </div>
+      </div>
+
+      <div id="quiz-result" class="hidden">
+        <div class="quiz-result-circle">
+          <span class="quiz-result-circle__score" id="quiz-score-num">0/10</span>
+          <span class="quiz-result-circle__label">Score total</span>
+          <span class="quiz-badge" id="quiz-badge">Bravo !</span>
+        </div>
+
+        <div class="quiz-feedback">
+          <h2 id="quiz-feedback-title">Bon résultat !</h2>
+          <p id="quiz-feedback-desc"></p>
+        </div>
+
+        <div class="quiz-actions">
+          <button type="button" class="btn-primary" id="quiz-share-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"
+              />
+            </svg>
+            Partager le score
+          </button>
+          <button type="button" class="btn-secondary" id="quiz-archive-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z" />
+            </svg>
+            Archiver
+          </button>
+          <button type="button" class="btn-muted" id="quiz-replay-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+              />
+            </svg>
+            Rejouer
+          </button>
+        </div>
+
+        <div class="quiz-saviez">
+          <span class="label-caps">Le saviez-vous ?</span>
+          <svg class="quiz-saviez__icon" width="48" height="48" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"
+            />
+          </svg>
+          <p>
+            Le WiMAX peut fournir un accès internet haut débit sur des distances importantes (selon déploiement), utile pour relier des zones peu denses sans tirer la fibre jusqu'à chaque
+            bâtiment.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/quiz.js"></script>
+  </body>
+</html>

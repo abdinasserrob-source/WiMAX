@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WiMAX — Scénario 1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #1565c0;
+        --white: #ffffff;
+        --wave: rgba(255, 255, 255, 0.55);
+        --wave2: rgba(255, 255, 255, 0.25);
+        --red: #ea4335;
+        --building: #b0bec5;
+        --yellow: #ffd600;
+        --green: #34a853;
+        --amber: #fbbc04;
+        --blue: #1a73e8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--white);
+        font-family: "Poppins", system-ui, sans-serif;
+      }
+      body {
+        overflow: hidden;
+      }
+
+      /* Remplit toute la hauteur de l’iframe (évite la bande noire du bas causée par aspect-ratio 16:9) */
+      .stage {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        background: var(--bg);
+        overflow: hidden;
+      }
+
+      /* dots / stars */
+      .stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.24) 0 1px, transparent 2px),
+          radial-gradient(circle at 18% 76%, rgba(255, 255, 255, 0.16) 0 1px, transparent 2px),
+          radial-gradient(circle at 48% 30%, rgba(255, 255, 255, 0.12) 0 1px, transparent 2px),
+          radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.14) 0 1px, transparent 2px),
+          radial-gradient(circle at 74% 68%, rgba(255, 255, 255, 0.1) 0 1px, transparent 2px);
+        opacity: 0.35;
+        pointer-events: none;
+      }
+
+      .hud {
+        position: absolute;
+        top: 18px;
+        left: 18px;
+        right: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 200;
+        pointer-events: none;
+        text-shadow: 0 2px 14px rgba(0, 0, 0, 0.25);
+      }
+      .part {
+        font-weight: 800;
+        font-size: clamp(14px, 1.8vw, 20px);
+        letter-spacing: 0.04em;
+      }
+      .mark {
+        font-weight: 800;
+        font-size: clamp(16px, 1.9vw, 22px);
+        text-decoration: underline;
+        text-decoration-thickness: 3px;
+        text-underline-offset: 6px;
+        letter-spacing: 0.03em;
+      }
+
+      .title {
+        position: absolute;
+        top: 70px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(92%, 1040px);
+        text-align: center;
+        font-weight: 800;
+        font-size: clamp(18px, 3.1vw, 40px);
+        line-height: 1.12;
+        z-index: 150;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.28);
+      }
+      .subtitle {
+        display: block;
+        margin-top: 10px;
+        font-weight: 700;
+        font-size: clamp(12px, 1.6vw, 20px);
+        opacity: 0.95;
+      }
+
+      .caption {
+        position: absolute;
+        left: 50%;
+        bottom: 84px;
+        transform: translateX(-50%);
+        width: min(92%, 1040px);
+        text-align: center;
+        font-weight: 800;
+        font-size: clamp(14px, 2.25vw, 28px);
+        line-height: 1.22;
+        z-index: 150;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.28);
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s ease-in-out;
+      }
+      .scene.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .controls {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: max(10px, env(safe-area-inset-bottom, 0px));
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 6px;
+        z-index: 220;
+        pointer-events: none;
+      }
+      .controls #restart {
+        justify-self: start;
+      }
+      .controls #toggle-run {
+        justify-self: center;
+      }
+      .controls #next {
+        justify-self: end;
+      }
+      .controls button {
+        pointer-events: auto;
+        font-family: "Poppins", system-ui, sans-serif;
+        font-size: clamp(11px, 2.8vw, 16px);
+        font-weight: 800;
+        padding: 9px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.12);
+        color: var(--white);
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition: transform 0.15s ease, background 0.2s ease;
+      }
+      .controls button:active {
+        transform: scale(0.97);
+      }
+      @media (hover: hover) {
+        .controls button:hover {
+          background: rgba(255, 255, 255, 0.18);
+        }
+      }
+
+      /* PART 1 */
+      .p1-center {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+      }
+      .p1-logo {
+        text-align: center;
+        opacity: 0;
+        transform: translateY(14px) scale(0.94);
+      }
+      .p1-logo .w {
+        font-weight: 800;
+        font-size: clamp(46px, 7.4vw, 92px);
+        letter-spacing: 0.02em;
+        text-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+      }
+      .p1-logo .t {
+        margin-top: 10px;
+        font-weight: 800;
+        font-size: clamp(16px, 2.5vw, 32px);
+        line-height: 1.12;
+        opacity: 0.96;
+      }
+      [data-part="1"][data-sub="1"] .p1-logo {
+        animation: popIn 0.8s ease-out both;
+      }
+      @keyframes popIn {
+        from {
+          opacity: 0;
+          transform: translateY(16px) scale(0.92);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .world {
+        position: absolute;
+        left: 50%;
+        top: 54%;
+        transform: translate(-50%, -50%) scale(0.95);
+        width: min(86%, 980px);
+        opacity: 0;
+      }
+      [data-part="1"][data-sub="2"] .world {
+        opacity: 1;
+        animation: fadeUp 0.7s ease-out both;
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -47%) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+      .world svg {
+        width: 100%;
+        height: auto;
+        filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.2));
+      }
+      .city {
+        fill: rgba(255, 255, 255, 0.95);
+        opacity: 0.35;
+        animation: cityBlink 1.2s ease-in-out infinite alternate;
+      }
+      @keyframes cityBlink {
+        from {
+          opacity: 0.35;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .pulse {
+        transform-origin: center;
+        opacity: 0;
+      }
+      [data-part="1"][data-sub="2"] .pulse {
+        opacity: 1;
+        animation: pulseOut 1.6s ease-out infinite;
+      }
+      .pulse.p2 {
+        animation-delay: 0.5s;
+      }
+      .pulse.p3 {
+        animation-delay: 1s;
+      }
+      .pulse circle {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.55);
+        stroke-width: 2;
+      }
+      @keyframes pulseOut {
+        0% {
+          transform: scale(0.2);
+          opacity: 0.85;
+        }
+        100% {
+          transform: scale(1.25);
+          opacity: 0;
+        }
+      }
+
+      .compare {
+        position: absolute;
+        left: 50%;
+        top: 56%;
+        transform: translate(-50%, -50%);
+        width: min(92%, 980px);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4%;
+        opacity: 0;
+      }
+      [data-part="1"][data-sub="3"] .compare {
+        opacity: 1;
+        animation: fadeUp2 0.7s ease-out both;
+      }
+      @keyframes fadeUp2 {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -47%);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%);
+        }
+      }
+      .cmp {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.12);
+        padding: 18px 16px 20px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
+        text-align: center;
+      }
+      .cmp h3 {
+        margin: 0 0 10px;
+        font-weight: 800;
+        font-size: clamp(14px, 2.2vw, 24px);
+      }
+      .ring {
+        margin: 10px auto 6px;
+        width: min(220px, 22vw);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.55);
+        display: grid;
+        place-items: center;
+      }
+      .ring.small {
+        width: min(120px, 14vw);
+      }
+      .ring.big {
+        width: min(260px, 26vw);
+        border-color: rgba(255, 255, 255, 0.7);
+      }
+      .ring span {
+        font-weight: 800;
+        font-size: clamp(12px, 1.9vw, 20px);
+      }
+      .cmp p {
+        margin: 10px 0 0;
+        font-weight: 800;
+        font-size: clamp(13px, 1.9vw, 20px);
+        opacity: 0.95;
+      }
+
+      /* PART 2 */
+      .arch-stage {
+        position: absolute;
+        left: 50%;
+        top: 56%;
+        transform: translate(-50%, -50%);
+        width: min(92%, 1100px);
+        height: 62%;
+      }
+      .bs-tower {
+        position: absolute;
+        left: 0%;
+        bottom: 12%;
+        width: 16%;
+        min-width: 92px;
+        opacity: 0;
+        transform: translateY(14px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      [data-part="2"][data-sub="1"] .bs-tower,
+      [data-part="2"][data-sub="2"] .bs-tower,
+      [data-part="2"][data-sub="3"] .bs-tower {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .bs-tower .lbl {
+        margin-top: 10px;
+        font-weight: 800;
+        font-size: clamp(11px, 1.4vw, 16px);
+      }
+      .arch-origin {
+        position: absolute;
+        left: 8%;
+        bottom: 44%;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+      }
+      .arch-wave {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      [data-part="2"][data-sub="1"] .arch-wave {
+        opacity: 1;
+      }
+      .arch-wave .r {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 32px;
+        height: 32px;
+        margin: -16px 0 0 -16px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.55);
+        opacity: 0;
+        animation: archWave 2.1s ease-out infinite;
+      }
+      .arch-wave .r:nth-child(2) {
+        animation-delay: 0.5s;
+        border-color: rgba(255, 255, 255, 0.28);
+      }
+      .arch-wave .r:nth-child(3) {
+        animation-delay: 1s;
+        border-color: rgba(255, 255, 255, 0.18);
+      }
+      @keyframes archWave {
+        0% {
+          transform: scale(0.2);
+          opacity: 0.7;
+        }
+        100% {
+          transform: scale(18);
+          opacity: 0;
+        }
+      }
+      .building {
+        position: absolute;
+        left: 44%;
+        bottom: 16%;
+        width: 16%;
+        min-width: 110px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      .receiver {
+        position: absolute;
+        right: 2%;
+        bottom: 18%;
+        width: 15%;
+        min-width: 110px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      [data-part="2"][data-sub="2"] .building,
+      [data-part="2"][data-sub="3"] .building,
+      [data-part="2"][data-sub="2"] .receiver,
+      [data-part="2"][data-sub="3"] .receiver {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .link-los,
+      .link-nlos {
+        position: absolute;
+        left: 14%;
+        width: 74%;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .link-los {
+        top: 12%;
+        height: 40%;
+      }
+      .link-nlos {
+        top: 36%;
+        height: 32%;
+      }
+      [data-part="2"][data-sub="2"] .link-los,
+      [data-part="2"][data-sub="2"] .link-nlos,
+      [data-part="2"][data-sub="3"] .link-los,
+      [data-part="2"][data-sub="3"] .link-nlos {
+        opacity: 1;
+      }
+      .link-los path {
+        stroke-dasharray: 8 10;
+        animation: dash 1.3s linear infinite;
+      }
+      @keyframes dash {
+        to {
+          stroke-dashoffset: -36;
+        }
+      }
+      .link-nlos path {
+        animation: glow 1.2s ease-in-out infinite alternate;
+      }
+      @keyframes glow {
+        from {
+          opacity: 0.55;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .users {
+        position: absolute;
+        right: 2%;
+        bottom: 4%;
+        width: 30%;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      [data-part="2"][data-sub="3"] .users {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* PART 3 */
+      .tech-stage {
+        position: absolute;
+        left: 50%;
+        top: 58%;
+        transform: translate(-50%, -50%);
+        width: min(92%, 1100px);
+        height: 62%;
+      }
+      .card {
+        width: min(92%, 980px);
+        margin: 0 auto;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.12);
+        padding: 18px 18px 16px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      [data-part="3"][data-sub="1"] .ofdm-card,
+      [data-part="3"][data-sub="2"] .mimo-card,
+      [data-part="3"][data-sub="3"] .mod-card {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .bars {
+        display: grid;
+        grid-template-columns: repeat(18, 1fr);
+        gap: 6px;
+        align-items: end;
+        height: 190px;
+        margin-top: 12px;
+      }
+      .bar {
+        height: 18%;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.75);
+        animation: dance 0.9s ease-in-out infinite alternate;
+      }
+      .bar:nth-child(3n) {
+        background: rgba(255, 214, 0, 0.85);
+        animation-duration: 0.65s;
+      }
+      .bar:nth-child(4n) {
+        background: rgba(52, 168, 83, 0.85);
+        animation-duration: 0.75s;
+      }
+      .bar:nth-child(5n) {
+        background: rgba(26, 115, 232, 0.9);
+        animation-duration: 0.8s;
+      }
+      @keyframes dance {
+        from {
+          transform: scaleY(0.35);
+          opacity: 0.7;
+        }
+        to {
+          transform: scaleY(1.2);
+          opacity: 1;
+        }
+      }
+
+      .mimo-grid {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 24px;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .ant-col {
+        display: grid;
+        gap: 12px;
+        justify-items: center;
+      }
+      .ant {
+        width: 74px;
+        height: 74px;
+        border-radius: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        display: grid;
+        place-items: center;
+      }
+      .ant svg {
+        width: 40px;
+      }
+      .x-arrows {
+        width: 160px;
+        height: 160px;
+      }
+      .x-arrows path {
+        stroke-dasharray: 10 10;
+        animation: dash2 1.1s linear infinite;
+      }
+      @keyframes dash2 {
+        to {
+          stroke-dashoffset: -34;
+        }
+      }
+
+      .mods {
+        display: grid;
+        gap: 14px;
+        margin-top: 8px;
+      }
+      .mod-row {
+        display: grid;
+        grid-template-columns: 120px 1fr 110px;
+        gap: 14px;
+        align-items: center;
+      }
+      .rate-bg {
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+        overflow: hidden;
+      }
+      .rate {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        transition: width 0.6s ease-in-out;
+      }
+      [data-part="3"][data-sub="3"] .rate.r1 {
+        width: 26%;
+        background: rgba(255, 214, 0, 0.9);
+      }
+      [data-part="3"][data-sub="3"] .rate.r2 {
+        width: 58%;
+        background: rgba(52, 168, 83, 0.9);
+      }
+      [data-part="3"][data-sub="3"] .rate.r3 {
+        width: 88%;
+        background: rgba(255, 255, 255, 0.92);
+      }
+      .right {
+        text-align: right;
+        font-weight: 800;
+        opacity: 0.95;
+      }
+
+      /* PART 4 */
+      .aerial {
+        position: absolute;
+        left: 50%;
+        top: 58%;
+        transform: translate(-50%, -50%);
+        width: min(92%, 1100px);
+        height: 62%;
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+        overflow: hidden;
+      }
+      .gridlines {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+        background-size: 72px 72px;
+        opacity: 0.25;
+      }
+      .bs-center {
+        position: absolute;
+        left: 50%;
+        top: 52%;
+        transform: translate(-50%, -50%);
+        width: 92px;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .big-ring {
+        position: absolute;
+        left: 50%;
+        top: 52%;
+        transform: translate(-50%, -50%) scale(0.45);
+        width: min(520px, 52vw);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: 4px solid rgba(255, 255, 255, 0.55);
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      [data-part="4"][data-sub="1"] .bs-center,
+      [data-part="4"][data-sub="2"] .bs-center,
+      [data-part="4"][data-sub="3"] .bs-center {
+        opacity: 1;
+      }
+      [data-part="4"][data-sub="1"] .big-ring {
+        opacity: 1;
+        animation: ringGrow 3.2s ease-in-out infinite alternate;
+      }
+      @keyframes ringGrow {
+        from {
+          transform: translate(-50%, -50%) scale(0.55);
+          opacity: 0.55;
+        }
+        to {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.18;
+        }
+      }
+      .zones {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .zone {
+        position: absolute;
+        left: 50%;
+        top: 52%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        opacity: 0.22;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+      .zg {
+        width: min(240px, 24vw);
+        aspect-ratio: 1;
+        background: rgba(52, 168, 83, 0.25);
+        border-color: rgba(52, 168, 83, 0.55);
+      }
+      .zy {
+        width: min(400px, 40vw);
+        aspect-ratio: 1;
+        background: rgba(251, 188, 4, 0.22);
+        border-color: rgba(251, 188, 4, 0.55);
+      }
+      .zr {
+        width: min(560px, 56vw);
+        aspect-ratio: 1;
+        background: rgba(234, 67, 53, 0.18);
+        border-color: rgba(234, 67, 53, 0.5);
+      }
+      .zlab {
+        position: absolute;
+        font-weight: 800;
+        font-size: clamp(12px, 1.6vw, 18px);
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(6px);
+      }
+      .zlab.g {
+        left: 52%;
+        top: 26%;
+      }
+      .zlab.y {
+        left: 64%;
+        top: 44%;
+      }
+      .zlab.r {
+        left: 58%;
+        top: 68%;
+      }
+      [data-part="4"][data-sub="2"] .zones {
+        opacity: 1;
+      }
+      .multi {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      [data-part="4"][data-sub="3"] .multi {
+        opacity: 1;
+      }
+      .cellRing {
+        position: absolute;
+        width: 220px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.35);
+        opacity: 0.18;
+        animation: cellPulse 2.4s ease-in-out infinite alternate;
+        transform: translate(-50%, -50%);
+      }
+      @keyframes cellPulse {
+        from {
+          opacity: 0.22;
+          transform: translate(-50%, -50%) scale(0.55);
+        }
+        to {
+          opacity: 0.12;
+          transform: translate(-50%, -50%) scale(0.9);
+        }
+      }
+      .cell {
+        position: absolute;
+        width: 84px;
+        transform: translate(-50%, -50%);
+      }
+
+      /* PART 5 */
+      .apps {
+        position: absolute;
+        left: 50%;
+        top: 58%;
+        transform: translate(-50%, -50%);
+        width: min(92%, 1100px);
+        height: 62%;
+      }
+      .app-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      [data-part="5"][data-sub="1"] .app-row {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .app {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.12);
+        padding: 16px 14px 14px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
+        display: grid;
+        gap: 10px;
+        justify-items: center;
+        text-align: center;
+      }
+      .app .ico {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.12);
+        display: grid;
+        place-items: center;
+      }
+      .app .ico svg {
+        width: 28px;
+      }
+      .app .lbl {
+        font-weight: 800;
+        font-size: clamp(12px, 1.6vw, 18px);
+        line-height: 1.2;
+      }
+      .specs {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+      [data-part="5"][data-sub="2"] .specs,
+      [data-part="5"][data-sub="3"] .specs {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .spec {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(0, 0, 0, 0.18);
+        backdrop-filter: blur(6px);
+        font-weight: 800;
+        font-size: clamp(12px, 1.5vw, 18px);
+      }
+      .spec svg {
+        width: 20px;
+      }
+      .finale {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        opacity: 0;
+        transition: opacity 0.6s ease;
+      }
+      [data-part="5"][data-sub="3"] .finale {
+        opacity: 1;
+      }
+      .finale .box {
+        width: min(92%, 860px);
+        text-align: center;
+        padding: 26px 18px 22px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 22px 50px rgba(0, 0, 0, 0.25);
+      }
+      .finale .big {
+        font-size: clamp(44px, 7.5vw, 92px);
+        font-weight: 800;
+      }
+      .finale .msg {
+        margin-top: 12px;
+        font-weight: 800;
+        font-size: clamp(16px, 2.4vw, 30px);
+        line-height: 1.2;
+      }
+
+      [data-part="1"] .caption {
+        opacity: 1;
+      }
+      [data-part="1"][data-sub="1"] .caption {
+        opacity: 0;
+      }
+      [data-part="2"] .caption,
+      [data-part="3"] .caption,
+      [data-part="4"] .caption,
+      [data-part="5"] .caption {
+        opacity: 1;
+      }
+
+      @media (max-width: 720px) {
+        .title {
+          top: 62px;
+        }
+        .caption {
+          bottom: 78px;
+        }
+        .mod-row {
+          grid-template-columns: 86px 1fr 80px;
+        }
+      }
+
+      /* Pause : le temps s’arrête ET les animations CSS (infinite) se figent */
+      #stage.demo-paused .scene,
+      #stage.demo-paused .scene *,
+      #stage.demo-paused .scene *::before,
+      #stage.demo-paused .scene *::after {
+        animation-play-state: paused !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="stage" data-part="1" data-sub="1">
+      <div class="hud">
+        <div class="part" id="part">Partie 1/5</div>
+        <div class="mark">WiMAX</div>
+      </div>
+
+      <div class="title" id="title">
+        WiMAX — Worldwide Interoperability<br />
+        for Microwave Access
+        <span class="subtitle" id="subtitle"></span>
+      </div>
+
+      <div class="caption" id="caption"></div>
+
+      <section class="scene p1 active" id="p1">
+        <div class="p1-center">
+          <div class="p1-logo">
+            <div class="w">WiMAX</div>
+            <div class="t">Internet sans fil<br />à longue distance</div>
+          </div>
+        </div>
+
+        <div class="world" aria-hidden="true">
+          <svg viewBox="0 0 1000 420" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M80 220c30-70 120-120 210-110 60 7 95 30 125 55 22 18 50 25 75 12 35-18 70-24 120-10 38 10 55 35 85 48 50 22 108 18 165-25 52-40 108-52 150-44 62 12 90 52 110 95 20 42 8 84-28 105-44 26-110 25-170 10-50-13-96 0-130 20-48 28-114 46-196 46-100 0-182-22-230-48-58-31-120-27-170-6-58 25-120 35-168 22-70-20-98-82-78-132z"
+              fill="rgba(255,255,255,0.22)"
+            />
+            <circle class="city" cx="210" cy="210" r="5" />
+            <circle class="city" cx="380" cy="175" r="5" />
+            <circle class="city" cx="540" cy="220" r="5" />
+            <circle class="city" cx="690" cy="170" r="5" />
+            <circle class="city" cx="810" cy="240" r="5" />
+
+            <g class="pulse p1" transform="translate(210 210)">
+              <circle r="14" />
+              <circle r="14" />
+              <circle r="14" />
+            </g>
+            <g class="pulse p2" transform="translate(540 220)">
+              <circle r="14" />
+              <circle r="14" />
+              <circle r="14" />
+            </g>
+            <g class="pulse p3" transform="translate(810 240)">
+              <circle r="14" />
+              <circle r="14" />
+              <circle r="14" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="compare" aria-hidden="true">
+          <div class="cmp">
+            <h3>WiFi</h3>
+            <div class="ring small"><span>100 m</span></div>
+            <p>Petit cercle</p>
+          </div>
+          <div class="cmp">
+            <h3>WiMAX</h3>
+            <div class="ring big"><span>50 km</span></div>
+            <p>WiMAX = WiFi géant</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene p2" id="p2">
+        <div class="arch-stage">
+          <div class="arch-origin" aria-hidden="true">
+            <div class="arch-wave">
+              <div class="r"></div>
+              <div class="r"></div>
+              <div class="r"></div>
+            </div>
+          </div>
+
+          <div class="bs-tower">
+            <svg viewBox="0 0 160 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="62" y="172" width="36" height="52" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="52" y="222" width="56" height="10" rx="4" fill="rgba(0,0,0,0.25)" />
+              <rect x="72" y="40" width="16" height="132" rx="6" fill="var(--red)" />
+              <rect x="72" y="86" width="16" height="18" rx="6" fill="rgba(255,255,255,0.92)" />
+              <rect x="72" y="120" width="16" height="18" rx="6" fill="rgba(255,255,255,0.92)" />
+              <path d="M80 16 L112 52 L48 52 Z" fill="rgba(255,255,255,0.92)" />
+              <circle cx="80" cy="28" r="4" fill="rgba(255,214,0,0.9)" />
+            </svg>
+            <div class="lbl">Station de Base (BS)</div>
+          </div>
+
+          <div class="building">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="28" y="50" width="144" height="130" rx="10" fill="var(--building)" />
+              <rect x="40" y="66" width="120" height="18" rx="6" fill="rgba(255,255,255,0.18)" />
+              <g opacity="0.75">
+                <rect x="44" y="96" width="24" height="18" rx="4" fill="rgba(255,255,255,0.55)" />
+                <rect x="76" y="96" width="24" height="18" rx="4" fill="rgba(255,255,255,0.55)" />
+                <rect x="108" y="96" width="24" height="18" rx="4" fill="rgba(255,255,255,0.55)" />
+                <rect x="44" y="124" width="24" height="18" rx="4" fill="rgba(255,255,255,0.55)" />
+                <rect x="76" y="124" width="24" height="18" rx="4" fill="rgba(255,255,255,0.55)" />
+                <rect x="108" y="124" width="24" height="18" rx="4" fill="rgba(255,255,255,0.55)" />
+              </g>
+            </svg>
+          </div>
+
+          <div class="receiver">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M50 120c34-40 66-55 100-60 12-2 20 7 16 18-12 35-34 62-74 84-11 6-23 1-25-10-3-12-8-22-17-32z" fill="var(--yellow)" />
+              <rect x="92" y="122" width="18" height="42" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="80" y="162" width="42" height="10" rx="4" fill="rgba(0,0,0,0.25)" />
+            </svg>
+          </div>
+
+          <svg class="link-los" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M70 220 C 260 80, 520 60, 930 130" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="4" />
+            <text x="520" y="70" fill="white" font-size="28" font-weight="800" text-anchor="middle">Line-of-Sight (LOS)</text>
+          </svg>
+          <svg class="link-nlos" viewBox="0 0 1000 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.9)" />
+              </marker>
+            </defs>
+            <path d="M70 120 L 930 120" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="5" marker-end="url(#arr)" />
+            <text x="520" y="86" fill="white" font-size="28" font-weight="800" text-anchor="middle">NLOS — Non Line-of-Sight</text>
+          </svg>
+
+          <div class="users" aria-hidden="true">
+            <svg viewBox="0 0 420 160" xmlns="http://www.w3.org/2000/svg">
+              <g fill="rgba(255,255,255,0.92)">
+                <circle cx="300" cy="46" r="16" />
+                <rect x="282" y="66" width="36" height="58" rx="18" />
+                <circle cx="360" cy="56" r="14" opacity="0.9" />
+                <rect x="346" y="74" width="28" height="48" rx="14" opacity="0.9" />
+                <circle cx="250" cy="58" r="14" opacity="0.9" />
+                <rect x="236" y="76" width="28" height="48" rx="14" opacity="0.9" />
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene p3" id="p3">
+        <div class="tech-stage">
+          <div class="card ofdm-card">
+            <div class="bars">
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            </div>
+          </div>
+          <div class="card mimo-card">
+            <div class="mimo-grid">
+              <div class="ant-col">
+                <div class="ant">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3v10" stroke="white" stroke-width="2" stroke-linecap="round" />
+                    <path d="M7 8c3-3 7-3 10 0" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+                    <path d="M5 10c4-4 10-4 14 0" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7" />
+                    <circle cx="12" cy="15" r="2.4" fill="white" />
+                  </svg>
+                </div>
+                <div class="ant">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3v10" stroke="white" stroke-width="2" stroke-linecap="round" />
+                    <path d="M7 8c3-3 7-3 10 0" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+                    <path d="M5 10c4-4 10-4 14 0" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7" />
+                    <circle cx="12" cy="15" r="2.4" fill="white" />
+                  </svg>
+                </div>
+              </div>
+              <svg class="x-arrows" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="mArrW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0 0 L10 5 L0 10 Z" fill="rgba(255,255,255,0.9)" />
+                  </marker>
+                </defs>
+                <path d="M20 30 L140 130" stroke="rgba(255,255,255,0.9)" stroke-width="4" marker-end="url(#mArrW)" />
+                <path d="M140 30 L20 130" stroke="rgba(255,255,255,0.7)" stroke-width="4" marker-end="url(#mArrW)" />
+              </svg>
+              <div class="ant-col">
+                <div class="ant">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3v10" stroke="white" stroke-width="2" stroke-linecap="round" />
+                    <path d="M7 8c3-3 7-3 10 0" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+                    <path d="M5 10c4-4 10-4 14 0" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7" />
+                    <circle cx="12" cy="15" r="2.4" fill="white" />
+                  </svg>
+                </div>
+                <div class="ant">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3v10" stroke="white" stroke-width="2" stroke-linecap="round" />
+                    <path d="M7 8c3-3 7-3 10 0" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.9" />
+                    <path d="M5 10c4-4 10-4 14 0" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7" />
+                    <circle cx="12" cy="15" r="2.4" fill="white" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card mod-card">
+            <div class="mods">
+              <div class="mod-row">
+                <div style="font-weight: 800">QPSK</div>
+                <div class="rate-bg"><div class="rate r1"></div></div>
+                <div class="right">bas</div>
+              </div>
+              <div class="mod-row">
+                <div style="font-weight: 800">16‑QAM</div>
+                <div class="rate-bg"><div class="rate r2"></div></div>
+                <div class="right">moyen</div>
+              </div>
+              <div class="mod-row">
+                <div style="font-weight: 800">64‑QAM</div>
+                <div class="rate-bg"><div class="rate r3"></div></div>
+                <div class="right">élevé</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene p4" id="p4">
+        <div class="aerial">
+          <div class="gridlines"></div>
+          <div class="big-ring"></div>
+          <div class="zones">
+            <div class="zone zr"></div>
+            <div class="zone zy"></div>
+            <div class="zone zg"></div>
+            <div class="zlab g">Signal fort — 40 Mbps</div>
+            <div class="zlab y">Signal moyen — 15 Mbps</div>
+            <div class="zlab r">Signal faible — 3 Mbps</div>
+          </div>
+          <div class="multi">
+            <div class="cellRing" style="left: 20%; top: 30%"></div>
+            <div class="cellRing" style="left: 78%; top: 36%"></div>
+            <div class="cellRing" style="left: 36%; top: 72%"></div>
+            <div class="cell" style="left: 20%; top: 30%">
+              <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="48" y="120" width="24" height="72" rx="3" fill="rgba(255,255,255,0.9)" />
+                <rect x="54" y="44" width="12" height="78" fill="rgba(255,255,255,0.65)" />
+                <path d="M60 8 L88 42 L32 42 Z" fill="rgba(255,255,255,0.92)" />
+              </svg>
+            </div>
+            <div class="cell" style="left: 78%; top: 36%">
+              <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="48" y="120" width="24" height="72" rx="3" fill="rgba(255,255,255,0.9)" />
+                <rect x="54" y="44" width="12" height="78" fill="rgba(255,255,255,0.65)" />
+                <path d="M60 8 L88 42 L32 42 Z" fill="rgba(255,255,255,0.92)" />
+              </svg>
+            </div>
+            <div class="cell" style="left: 36%; top: 72%">
+              <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="48" y="120" width="24" height="72" rx="3" fill="rgba(255,255,255,0.9)" />
+                <rect x="54" y="44" width="12" height="78" fill="rgba(255,255,255,0.65)" />
+                <path d="M60 8 L88 42 L32 42 Z" fill="rgba(255,255,255,0.92)" />
+              </svg>
+            </div>
+          </div>
+          <div class="bs-center" aria-hidden="true">
+            <svg viewBox="0 0 160 240" xmlns="http://www.w3.org/2000/svg">
+              <rect x="62" y="172" width="36" height="52" rx="6" fill="rgba(255,255,255,0.9)" />
+              <rect x="72" y="40" width="16" height="132" rx="6" fill="rgba(255,255,255,0.7)" />
+              <path d="M80 16 L112 52 L48 52 Z" fill="rgba(255,255,255,0.92)" />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="scene p5" id="p5">
+        <div class="apps">
+          <div class="app-row" aria-hidden="true">
+            <div class="app">
+              <div class="ico">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 10.5L12 4l8 6.5V20a1.5 1.5 0 0 1-1.5 1.5H5.5A1.5 1.5 0 0 1 4 20v-9.5Z" stroke="white" stroke-width="2" />
+                  <path d="M9.5 21v-6h5v6" stroke="white" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="lbl">Zones rurales<br />sans fibre</div>
+            </div>
+            <div class="app">
+              <div class="ico">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 17h10l2-6H5l2 6Z" stroke="white" stroke-width="2" stroke-linejoin="round" />
+                  <path d="M9 17l-1 3M15 17l1 3" stroke="white" stroke-width="2" stroke-linecap="round" />
+                  <path d="M8 11l4-6 4 6" stroke="white" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="lbl">Internet mobile<br />en déplacement</div>
+            </div>
+            <div class="app">
+              <div class="ico">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 20V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v15" stroke="white" stroke-width="2" />
+                  <path d="M7 20v-3h10v3" stroke="white" stroke-width="2" stroke-linecap="round" />
+                  <path d="M7 8h2M7 12h2M11 8h2M11 12h2M15 8h2M15 12h2" stroke="white" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="lbl">Entreprises<br />et campus</div>
+            </div>
+          </div>
+
+          <div class="specs" aria-hidden="true">
+            <div class="spec">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12h18" stroke="white" stroke-width="2" stroke-linecap="round" />
+                <path d="M6 14c2 2 4 3 6 3s4-1 6-3" stroke="white" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              Débit : jusqu'à <strong>75 Mbps</strong>
+            </div>
+            <div class="spec">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 18h16" stroke="white" stroke-width="2" stroke-linecap="round" />
+                <path d="M6 14h12" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+                <path d="M8 10h8" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6" />
+              </svg>
+              Fréquences : <strong>2.3 / 2.5 / 3.5 GHz</strong>
+            </div>
+            <div class="spec">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 7h12M6 12h12M6 17h12" stroke="white" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              Standard : <strong>IEEE 802.16</strong>
+            </div>
+          </div>
+
+          <div class="finale">
+            <div class="box">
+              <div class="big">WiMAX</div>
+              <div class="msg">WiMAX — Connecter le monde<br />sans frontières</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="controls">
+        <button type="button" id="restart">⏮ Recommencer</button>
+        <button type="button" id="toggle-run" aria-pressed="false">⏸ Pause</button>
+        <button type="button" id="next">⏭ Suivant</button>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var stage = document.getElementById("stage");
+        var partEl = document.getElementById("part");
+        var titleEl = document.getElementById("title");
+        var subEl = document.getElementById("subtitle");
+        var capEl = document.getElementById("caption");
+
+        var scenes = {
+          1: document.getElementById("p1"),
+          2: document.getElementById("p2"),
+          3: document.getElementById("p3"),
+          4: document.getElementById("p4"),
+          5: document.getElementById("p5"),
+        };
+
+        var T_PART = 12;
+        var T_TOTAL = 60;
+        var sec = 0;
+        var last = performance.now();
+        var running = true;
+
+        var toggleRunBtn = document.getElementById("toggle-run");
+        function syncPauseState() {
+          if (toggleRunBtn) {
+            toggleRunBtn.textContent = running ? "⏸ Pause" : "▶ Reprendre";
+            toggleRunBtn.setAttribute("aria-pressed", running ? "false" : "true");
+          }
+          stage.classList.toggle("demo-paused", !running);
+        }
+
+        function setScene(part) {
+          Object.keys(scenes).forEach(function (k) {
+            scenes[k].classList.toggle("active", Number(k) === part);
+          });
+        }
+
+        function partFromTime(s) {
+          return Math.min(4, Math.floor(s / T_PART)) + 1;
+        }
+
+        function subFromTime(rel) {
+          // 0-4, 4-8, 8-12
+          if (rel < 4) return 1;
+          if (rel < 8) return 2;
+          return 3;
+        }
+
+        function applyText(part, sub) {
+          var title = "";
+          var subtitle = "";
+          var caption = "";
+
+          if (part === 1) {
+            title = "WiMAX — Worldwide Interoperability<br />for Microwave Access";
+            if (sub === 1) {
+              subtitle = "";
+              caption = "";
+            } else if (sub === 2) {
+              subtitle = "Internet sans fil à grande couverture";
+              caption = "Jusqu'à 50 km de portée";
+            } else {
+              subtitle = "Comparaison simple de portée";
+              caption = "WiMAX = WiFi géant";
+            }
+          } else if (part === 2) {
+            title = "Architecture du réseau WiMAX";
+            if (sub === 1) {
+              subtitle = "Station de base + propagation radio";
+              caption = "8000 km² de couverture";
+            } else if (sub === 2) {
+              subtitle = "Deux types de liaisons";
+              caption = "LOS vs NLOS : direct ou à travers des obstacles";
+            } else {
+              subtitle = "Utilisateurs connectés via l'antenne réceptrice";
+              caption = "Jusqu'à 75 Mbps partagés";
+            }
+          } else if (part === 3) {
+            title = "Technologies de transmission";
+            if (sub === 1) {
+              subtitle = "Sous-porteuses orthogonales";
+              caption = "OFDM — résistant aux interférences";
+            } else if (sub === 2) {
+              subtitle = "Plusieurs antennes, plus de capacité";
+              caption = "MIMO — double le débit";
+            } else {
+              subtitle = "QPSK → 16‑QAM → 64‑QAM";
+              caption = "Modulation adaptative selon la qualité du signal";
+            }
+          } else if (part === 4) {
+            title = "Couverture et portée";
+            if (sub === 1) {
+              subtitle = "Vue aérienne simplifiée";
+              caption = "Portée : 10–50 km";
+            } else if (sub === 2) {
+              subtitle = "Débit selon la distance";
+              caption = "Zone verte → jaune → rouge";
+            } else {
+              subtitle = "Plusieurs stations de base";
+              caption = "Cellules WiMAX — couverture continue";
+            }
+          } else {
+            title = "Applications du WiMAX";
+            if (sub === 1) {
+              subtitle = "Là où la fibre est difficile";
+              caption = "Rural, mobilité, campus";
+            } else if (sub === 2) {
+              subtitle = "Caractéristiques clés";
+              caption = "Débit, fréquences et standard";
+            } else {
+              subtitle = "Résumé final";
+              caption = "WiMAX — Connecter le monde sans frontières";
+            }
+          }
+
+          titleEl.innerHTML = title;
+          subEl.textContent = subtitle;
+          capEl.textContent = caption;
+        }
+
+        function apply() {
+          var part = partFromTime(sec);
+          var rel = sec - (part - 1) * T_PART;
+          var sub = subFromTime(rel);
+
+          stage.setAttribute("data-part", String(part));
+          stage.setAttribute("data-sub", String(sub));
+          partEl.textContent = "Partie " + part + "/5";
+          setScene(part);
+          applyText(part, sub);
+        }
+
+        function loop(ts) {
+          if (running) {
+            var dt = (ts - last) / 1000;
+            last = ts;
+            sec += dt;
+            if (sec >= T_TOTAL) sec -= T_TOTAL;
+          } else {
+            last = ts;
+          }
+          apply();
+          requestAnimationFrame(loop);
+        }
+
+        document.getElementById("restart").addEventListener("click", function () {
+          sec = 0;
+          last = performance.now();
+          running = true;
+          syncPauseState();
+          apply();
+        });
+        document.getElementById("next").addEventListener("click", function () {
+          var part = partFromTime(sec);
+          sec = part >= 5 ? 0 : part * T_PART;
+          last = performance.now();
+          apply();
+        });
+        if (toggleRunBtn) {
+          toggleRunBtn.addEventListener("click", function () {
+            running = !running;
+            last = performance.now();
+            syncPauseState();
+          });
+        }
+
+        apply();
+        syncPauseState();
+        requestAnimationFrame(loop);
+      })();
+    </script>
+  </body>
+</html>

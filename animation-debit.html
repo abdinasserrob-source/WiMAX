@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WiMAX — Débit et distance (animation)</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #0d0d0d;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+      }
+
+      /* Canvas 16:9, max 1280x720 */
+      .stage {
+        --bg: #0d0d0d;
+        position: relative;
+        width: 100%;
+        max-width: 1280px;
+        aspect-ratio: 16 / 9;
+        max-height: min(720px, 85vh);
+        background: var(--bg);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+      }
+
+      /* Origine des ondes (centre de la BS) */
+      .bs-origin {
+        position: absolute;
+        left: 13.5%;
+        top: 48%;
+        width: 4px;
+        height: 4px;
+        pointer-events: none;
+      }
+
+      /* Tour BS — SVG */
+      .tower-wrap {
+        position: absolute;
+        left: 8%;
+        bottom: 18%;
+        width: 12%;
+        min-width: 72px;
+        max-width: 140px;
+        z-index: 10;
+        animation: towerReveal 1s ease-out both;
+      }
+
+      @keyframes towerReveal {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .tower-wrap svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        filter: drop-shadow(0 0 12px rgba(26, 115, 232, 0.35));
+      }
+
+      .bs-label {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: -22px;
+        font-weight: 800;
+        font-size: clamp(11px, 2vw, 16px);
+        color: #fff;
+        letter-spacing: 0.08em;
+        white-space: nowrap;
+      }
+
+      /* Ondes concentriques */
+      .ripples {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+      }
+
+      .ripple {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 40px;
+        height: 40px;
+        margin: -20px 0 0 -20px;
+        border-radius: 50%;
+        border: 2px solid;
+        opacity: 0;
+      }
+
+      .ripple:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .ripple:nth-child(2) {
+        animation-delay: 0.6s;
+      }
+      .ripple:nth-child(3) {
+        animation-delay: 1.2s;
+      }
+      .ripple:nth-child(4) {
+        animation-delay: 1.8s;
+      }
+
+      @keyframes rippleOut {
+        0% {
+          transform: scale(0.15);
+          opacity: 0.85;
+        }
+        70% {
+          opacity: 0.28;
+        }
+        100% {
+          transform: scale(var(--ripple-scale, 28));
+          opacity: 0;
+        }
+      }
+
+      @keyframes rippleOutMedium {
+        0% {
+          transform: scale(0.12);
+          opacity: 0.48;
+        }
+        65% {
+          opacity: 0.14;
+        }
+        100% {
+          transform: scale(var(--ripple-scale, 32));
+          opacity: 0;
+        }
+      }
+
+      @keyframes rippleOutFaint {
+        0% {
+          transform: scale(0.1);
+          opacity: 0.22;
+        }
+        60% {
+          opacity: 0.06;
+        }
+        100% {
+          transform: scale(var(--ripple-scale, 38));
+          opacity: 0;
+        }
+      }
+
+      .ripples--blue .ripple {
+        border-color: #1a73e8;
+        box-shadow: 0 0 20px rgba(26, 115, 232, 0.4);
+        animation: rippleOut 2.4s ease-out infinite;
+      }
+
+      .ripples--green .ripple {
+        border-color: #34a853;
+        box-shadow: 0 0 24px rgba(52, 168, 83, 0.55);
+        --ripple-scale: 20;
+        animation: rippleOut 2.2s ease-out infinite;
+      }
+
+      .ripples--yellow .ripple {
+        border-color: #fbbc04;
+        box-shadow: 0 0 14px rgba(251, 188, 4, 0.28);
+        --ripple-scale: 34;
+        animation: rippleOutMedium 2.9s ease-out infinite;
+      }
+
+      .ripples--red .ripple {
+        border-color: #ea4335;
+        box-shadow: 0 0 10px rgba(234, 67, 53, 0.2);
+        --ripple-scale: 44;
+        animation: rippleOutFaint 3.2s ease-out infinite;
+      }
+
+      /* Visibilité par phase */
+      .ripples {
+        opacity: 0;
+        transition: opacity 0.35s ease;
+      }
+
+      [data-phase="1"] .ripples--blue {
+        opacity: 1;
+      }
+      [data-phase="2"] .ripples--blue {
+        opacity: 0.25;
+      }
+      [data-phase="2"] .ripples--green {
+        opacity: 1;
+      }
+      [data-phase="3"] .ripples--green {
+        opacity: 0.35;
+      }
+      [data-phase="3"] .ripples--yellow {
+        opacity: 1;
+      }
+      [data-phase="4"] .ripples--yellow {
+        opacity: 0.25;
+      }
+      [data-phase="4"] .ripples--red {
+        opacity: 1;
+      }
+      [data-phase="5"] .ripples--blue,
+      [data-phase="5"] .ripples--green,
+      [data-phase="5"] .ripples--yellow,
+      [data-phase="5"] .ripples--red {
+        opacity: 0.45;
+      }
+
+      /* Smartphones */
+      .phones-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+      }
+
+      .phone {
+        position: absolute;
+        bottom: 22%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        opacity: 0;
+        transform: translateY(12px) scale(0.92);
+        transition:
+          opacity 0.45s ease,
+          transform 0.45s ease;
+      }
+
+      .phone__icon {
+        font-size: clamp(28px, 5vw, 44px);
+        line-height: 1;
+        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+      }
+
+      .phone__label {
+        font-weight: 800;
+        font-size: clamp(10px, 1.65vw, 15px);
+        text-align: center;
+        white-space: nowrap;
+        padding: 4px 8px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+      }
+
+      .phone--1 {
+        left: 38%;
+      }
+      .phone--2 {
+        left: 58%;
+      }
+      .phone--3 {
+        left: 78%;
+      }
+
+      .phone--1 .phone__label {
+        color: #34a853;
+      }
+      .phone--2 .phone__label {
+        color: #fbbc04;
+      }
+      .phone--3 .phone__label {
+        color: #ea4335;
+      }
+
+      [data-phase="2"] .phone--1,
+      [data-phase="3"] .phone--1,
+      [data-phase="4"] .phone--1,
+      [data-phase="5"] .phone--1 {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      [data-phase="3"] .phone--2,
+      [data-phase="4"] .phone--2,
+      [data-phase="5"] .phone--2 {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      [data-phase="4"] .phone--3,
+      [data-phase="5"] .phone--3 {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      /* Légende bas — phase 5 */
+      .lesson {
+        position: absolute;
+        left: 50%;
+        bottom: 6%;
+        transform: translateX(-50%) translateY(20px);
+        width: 92%;
+        max-width: 720px;
+        text-align: center;
+        font-weight: 800;
+        font-size: clamp(13px, 2.2vw, 22px);
+        color: #fff;
+        line-height: 1.35;
+        opacity: 0;
+        transition:
+          opacity 0.5s ease,
+          transform 0.5s ease;
+        text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8);
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      [data-phase="5"] .lesson {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Grille décorative très légère */
+      .stage::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle at 20% 80%, rgba(26, 115, 232, 0.08) 0%, transparent 45%),
+          radial-gradient(circle at 85% 30%, rgba(234, 67, 53, 0.06) 0%, transparent 40%);
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="stage" data-phase="1" role="img" aria-label="Animation éducative WiMAX : débit selon la distance">
+      <div class="bs-origin">
+        <div class="ripples ripples--blue" aria-hidden="true">
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+        </div>
+        <div class="ripples ripples--green" aria-hidden="true">
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+        </div>
+        <div class="ripples ripples--yellow" aria-hidden="true">
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+        </div>
+        <div class="ripples ripples--red" aria-hidden="true">
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+          <div class="ripple"></div>
+        </div>
+      </div>
+
+      <div class="tower-wrap">
+        <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="mastGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color: #5f6368" />
+              <stop offset="50%" style="stop-color: #9aa0a6" />
+              <stop offset="100%" style="stop-color: #5f6368" />
+            </linearGradient>
+          </defs>
+          <rect x="48" y="120" width="24" height="72" rx="3" fill="#3c4043" />
+          <rect x="42" y="188" width="36" height="10" rx="2" fill="#202124" />
+          <rect x="54" y="40" width="12" height="88" fill="url(#mastGrad)" />
+          <path d="M60 8 L88 42 L32 42 Z" fill="#1a73e8" opacity="0.95" />
+          <rect x="56" y="38" width="8" height="8" rx="1" fill="#e8f0fe" />
+          <line x1="60" y1="40" x2="60" y2="120" stroke="#bdc1c6" stroke-width="2" />
+          <circle cx="60" cy="28" r="4" fill="#fbbc04" />
+        </svg>
+        <span class="bs-label">BS</span>
+      </div>
+
+      <div class="phones-layer">
+        <div class="phone phone--1">
+          <span class="phone__icon" aria-hidden="true">📱</span>
+          <span class="phone__label">500 m → 40 Mbps</span>
+        </div>
+        <div class="phone phone--2">
+          <span class="phone__icon" aria-hidden="true">📱</span>
+          <span class="phone__label">2 km → 15 Mbps</span>
+        </div>
+        <div class="phone phone--3">
+          <span class="phone__icon" aria-hidden="true">📱</span>
+          <span class="phone__label">5 km → 3 Mbps</span>
+        </div>
+      </div>
+
+      <p class="lesson">Plus la distance augmente, le débit diminue</p>
+    </div>
+
+    <script>
+      (function () {
+        var stage = document.getElementById("stage");
+        var phase = 1;
+        var DURATION_MS = 3000;
+        var MAX_PHASE = 5;
+
+        function applyPhase(p) {
+          stage.setAttribute("data-phase", String(p));
+        }
+
+        applyPhase(1);
+        setInterval(function () {
+          phase = phase >= MAX_PHASE ? 1 : phase + 1;
+          applyPhase(phase);
+        }, DURATION_MS);
+      })();
+    </script>
+  </body>
+</html>

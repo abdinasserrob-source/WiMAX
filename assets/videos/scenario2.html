@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WiMAX — Performance &amp; QoS (scénario 2)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0d0d0d;
+        --blanc: #ffffff;
+        --vert: #34a853;
+        --jaune: #fbbc04;
+        --rouge: #ea4335;
+        --bleu: #1a73e8;
+        --orange: #f57c00;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--blanc);
+        font-family: "Poppins", system-ui, sans-serif;
+        height: 100%;
+      }
+      body {
+        min-height: 100%;
+        display: block;
+        padding: 0;
+      }
+
+      .wrap {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: var(--bg);
+        border-radius: 0;
+        overflow: hidden;
+        box-shadow: none;
+        height: 100%;
+      }
+
+      .indicator {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        z-index: 100;
+        font-size: clamp(13px, 1.6vw, 18px);
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.9);
+        letter-spacing: 0.04em;
+      }
+
+      .scene-title {
+        position: absolute;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        text-align: center;
+        font-size: clamp(18px, 2.8vw, 34px);
+        font-weight: 800;
+        z-index: 50;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.6s ease-in-out;
+      }
+      .scene.is-active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* ——— Partie 1 ——— */
+      .s1 .bs-origin {
+        position: absolute;
+        left: 12%;
+        top: 46%;
+        width: 1px;
+        height: 1px;
+      }
+      .s1 .tower-wrap {
+        position: absolute;
+        left: 6%;
+        bottom: 20%;
+        width: 11%;
+        min-width: 64px;
+        max-width: 120px;
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+      }
+      .s1[data-sub="1"] .tower-wrap,
+      .s1[data-sub="2"] .tower-wrap,
+      .s1[data-sub="3"] .tower-wrap,
+      .s1[data-sub="4"] .tower-wrap,
+      .s1[data-sub="5"] .tower-wrap {
+        opacity: 1;
+      }
+
+      .s1 .bs-label {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: -20px;
+        font-weight: 800;
+        font-size: clamp(11px, 1.5vw, 15px);
+        letter-spacing: 0.1em;
+      }
+
+      .ripple {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 36px;
+        height: 36px;
+        margin: -18px 0 0 -18px;
+        border-radius: 50%;
+        border: 2px solid;
+        opacity: 0;
+      }
+      .ripples {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.4s ease-in-out;
+      }
+      .ripples.on {
+        opacity: 1;
+      }
+
+      .ripples--blue .ripple {
+        border-color: var(--bleu);
+        box-shadow: 0 0 18px rgba(26, 115, 232, 0.45);
+        animation: rBlue 2.2s ease-out infinite;
+      }
+      .ripples--blue .ripple:nth-child(2) {
+        animation-delay: 0.55s;
+      }
+      .ripples--blue .ripple:nth-child(3) {
+        animation-delay: 1.1s;
+      }
+      .ripples--blue .ripple:nth-child(4) {
+        animation-delay: 1.65s;
+      }
+
+      .ripples--green .ripple {
+        border-color: var(--vert);
+        box-shadow: 0 0 22px rgba(52, 168, 83, 0.55);
+        animation: rStrong 1.9s ease-out infinite;
+      }
+      .ripples--green .ripple:nth-child(2) {
+        animation-delay: 0.48s;
+      }
+      .ripples--green .ripple:nth-child(3) {
+        animation-delay: 0.96s;
+      }
+      .ripples--green .ripple:nth-child(4) {
+        animation-delay: 1.44s;
+      }
+
+      .ripples--yellow .ripple {
+        border-color: var(--jaune);
+        box-shadow: 0 0 14px rgba(251, 188, 4, 0.35);
+        animation: rMed 2.4s ease-out infinite;
+      }
+      .ripples--yellow .ripple:nth-child(2) {
+        animation-delay: 0.6s;
+      }
+      .ripples--yellow .ripple:nth-child(3) {
+        animation-delay: 1.2s;
+      }
+      .ripples--yellow .ripple:nth-child(4) {
+        animation-delay: 1.8s;
+      }
+
+      .ripples--red .ripple {
+        border-color: var(--rouge);
+        box-shadow: 0 0 10px rgba(234, 67, 53, 0.25);
+        animation: rWeak 2.8s ease-out infinite;
+      }
+      .ripples--red .ripple:nth-child(2) {
+        animation-delay: 0.7s;
+      }
+      .ripples--red .ripple:nth-child(3) {
+        animation-delay: 1.4s;
+      }
+      .ripples--red .ripple:nth-child(4) {
+        animation-delay: 2.1s;
+      }
+
+      @keyframes rBlue {
+        0% {
+          transform: scale(0.12);
+          opacity: 0.82;
+        }
+        100% {
+          transform: scale(26);
+          opacity: 0;
+        }
+      }
+      @keyframes rStrong {
+        0% {
+          transform: scale(0.1);
+          opacity: 0.88;
+        }
+        100% {
+          transform: scale(18);
+          opacity: 0;
+        }
+      }
+      @keyframes rMed {
+        0% {
+          transform: scale(0.1);
+          opacity: 0.45;
+        }
+        100% {
+          transform: scale(28);
+          opacity: 0;
+        }
+      }
+      @keyframes rWeak {
+        0% {
+          transform: scale(0.08);
+          opacity: 0.22;
+        }
+        100% {
+          transform: scale(36);
+          opacity: 0;
+        }
+      }
+
+      .s1[data-sub="1"] .ripples--blue {
+        opacity: 1;
+      }
+      .s1[data-sub="2"] .ripples--blue {
+        opacity: 0.2;
+      }
+      .s1[data-sub="2"] .ripples--green {
+        opacity: 1;
+      }
+      .s1[data-sub="3"] .ripples--green {
+        opacity: 0.25;
+      }
+      .s1[data-sub="3"] .ripples--yellow {
+        opacity: 1;
+      }
+      .s1[data-sub="4"] .ripples--yellow {
+        opacity: 0.2;
+      }
+      .s1[data-sub="4"] .ripples--red {
+        opacity: 1;
+      }
+      .s1[data-sub="5"] .ripples--blue,
+      .s1[data-sub="5"] .ripples--green,
+      .s1[data-sub="5"] .ripples--yellow,
+      .s1[data-sub="5"] .ripples--red {
+        opacity: 0.35;
+      }
+
+      .s1-phone {
+        position: absolute;
+        bottom: 22%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition:
+          opacity 0.5s ease-in-out,
+          transform 0.5s ease-in-out;
+      }
+      .s1-phone svg {
+        width: clamp(36px, 5vw, 52px);
+        height: auto;
+        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+      }
+      .s1-phone .dist {
+        font-size: clamp(11px, 1.4vw, 14px);
+        font-weight: 600;
+        color: var(--blanc);
+      }
+      .s1-bar-wrap {
+        width: clamp(72px, 10vw, 100px);
+        height: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .s1-bar {
+        height: 100%;
+        width: 0%;
+        border-radius: 99px;
+        transition: width 0.7s ease-in-out;
+      }
+      .s1-phone--a {
+        left: 36%;
+      }
+      .s1-phone--b {
+        left: 54%;
+      }
+      .s1-phone--c {
+        left: 72%;
+      }
+
+      .s1[data-sub="2"] .s1-phone--a,
+      .s1[data-sub="3"] .s1-phone--a,
+      .s1[data-sub="4"] .s1-phone--a,
+      .s1[data-sub="5"] .s1-phone--a {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .s1[data-sub="2"] .s1-phone--a .s1-bar {
+        width: 100%;
+        background: var(--vert);
+      }
+      .s1[data-sub="3"] .s1-phone--b,
+      .s1[data-sub="4"] .s1-phone--b,
+      .s1[data-sub="5"] .s1-phone--b {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .s1[data-sub="3"] .s1-phone--b .s1-bar {
+        width: 38%;
+        background: var(--jaune);
+      }
+      .s1[data-sub="4"] .s1-phone--c,
+      .s1[data-sub="5"] .s1-phone--c {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .s1[data-sub="4"] .s1-phone--c .s1-bar {
+        width: 10%;
+        background: var(--rouge);
+      }
+      .s1[data-sub="5"] .s1-phone--a .s1-bar {
+        width: 100%;
+      }
+      .s1[data-sub="5"] .s1-phone--b .s1-bar {
+        width: 38%;
+      }
+      .s1[data-sub="5"] .s1-phone--c .s1-bar {
+        width: 10%;
+      }
+
+      .s1-mbps {
+        font-size: clamp(10px, 1.2vw, 13px);
+        font-weight: 700;
+      }
+      .s1-phone--a .s1-mbps {
+        color: var(--vert);
+      }
+      .s1-phone--b .s1-mbps {
+        color: var(--jaune);
+      }
+      .s1-phone--c .s1-mbps {
+        color: var(--rouge);
+      }
+
+      .s1-legend {
+        position: absolute;
+        left: 50%;
+        bottom: 8%;
+        transform: translateX(-50%);
+        width: 92%;
+        text-align: center;
+        font-weight: 800;
+        font-size: clamp(12px, 1.8vw, 20px);
+        line-height: 1.35;
+        opacity: 0;
+        transition: opacity 0.6s ease-in-out;
+      }
+      .s1[data-sub="5"] .s1-legend {
+        opacity: 1;
+      }
+
+      .s1-arrow {
+        margin: 10px auto 0;
+        height: 10px;
+        width: min(70%, 420px);
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--vert), var(--jaune), var(--rouge));
+        opacity: 0;
+        transform: scaleX(0.3);
+        transition:
+          opacity 0.6s ease-in-out,
+          transform 0.8s ease-in-out;
+      }
+      .s1[data-sub="5"] .s1-arrow {
+        opacity: 1;
+        transform: scaleX(1);
+      }
+
+      /* ——— Partie 2 ——— */
+      .s2 .tower-mid {
+        position: absolute;
+        left: 50%;
+        bottom: 38%;
+        transform: translateX(-50%);
+        width: 12%;
+        min-width: 70px;
+        max-width: 130px;
+      }
+      .s2 .tower-mid svg {
+        width: 100%;
+        height: auto;
+        filter: drop-shadow(0 0 16px rgba(26, 115, 232, 0.4));
+      }
+      .s2 .bs-mid-label {
+        text-align: center;
+        font-weight: 800;
+        font-size: clamp(11px, 1.4vw, 14px);
+        margin-top: 4px;
+        letter-spacing: 0.08em;
+      }
+
+      .s2-phones {
+        position: absolute;
+        left: 50%;
+        top: 42%;
+        width: 55%;
+        height: 42%;
+        transform: translate(-50%, -50%);
+      }
+      .s2-ph {
+        position: absolute;
+        width: 11%;
+        min-width: 40px;
+        max-width: 56px;
+        opacity: 0;
+        transform: scale(0.85);
+        transition:
+          opacity 0.45s ease-in-out,
+          transform 0.45s ease-in-out;
+      }
+      .s2-ph svg {
+        width: 100%;
+        height: auto;
+      }
+      /* positions on ellipse around center */
+      .s2-ph:nth-child(1) {
+        left: 50%;
+        top: 8%;
+        transform: translate(-50%, 0) scale(0.85);
+      }
+      .s2-ph:nth-child(2) {
+        left: 12%;
+        top: 38%;
+      }
+      .s2-ph:nth-child(3) {
+        right: 12%;
+        top: 38%;
+      }
+      .s2-ph:nth-child(4) {
+        left: 22%;
+        bottom: 8%;
+      }
+      .s2-ph:nth-child(5) {
+        right: 22%;
+        bottom: 8%;
+      }
+      .s2-ph:nth-child(6) {
+        left: 42%;
+        bottom: 2%;
+      }
+      .s2-ph:nth-child(7) {
+        right: 42%;
+        bottom: 2%;
+      }
+
+      .s2[data-sub="1"] .s2-ph:nth-child(1) {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+      }
+      .s2[data-sub="2"] .s2-ph:nth-child(1),
+      .s2[data-sub="3"] .s2-ph:nth-child(1),
+      .s2[data-sub="4"] .s2-ph:nth-child(1) {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+      }
+      .s2[data-sub="2"] .s2-ph:nth-child(2),
+      .s2[data-sub="2"] .s2-ph:nth-child(3),
+      .s2[data-sub="2"] .s2-ph:nth-child(4),
+      .s2[data-sub="3"] .s2-ph:nth-child(2),
+      .s2[data-sub="3"] .s2-ph:nth-child(3),
+      .s2[data-sub="3"] .s2-ph:nth-child(4),
+      .s2[data-sub="3"] .s2-ph:nth-child(5),
+      .s2[data-sub="3"] .s2-ph:nth-child(6),
+      .s2[data-sub="3"] .s2-ph:nth-child(7),
+      .s2[data-sub="4"] .s2-ph:nth-child(-n + 7) {
+        opacity: 1;
+      }
+      .s2[data-sub="2"] .s2-ph:nth-child(2),
+      .s2[data-sub="2"] .s2-ph:nth-child(3),
+      .s2[data-sub="2"] .s2-ph:nth-child(4) {
+        transform: scale(1);
+      }
+      .s2[data-sub="3"] .s2-ph:nth-child(2),
+      .s2[data-sub="3"] .s2-ph:nth-child(3),
+      .s2[data-sub="3"] .s2-ph:nth-child(4),
+      .s2[data-sub="3"] .s2-ph:nth-child(5),
+      .s2[data-sub="3"] .s2-ph:nth-child(6),
+      .s2[data-sub="3"] .s2-ph:nth-child(7),
+      .s2[data-sub="4"] .s2-ph:nth-child(2),
+      .s2[data-sub="4"] .s2-ph:nth-child(3),
+      .s2[data-sub="4"] .s2-ph:nth-child(4),
+      .s2[data-sub="4"] .s2-ph:nth-child(5),
+      .s2[data-sub="4"] .s2-ph:nth-child(6),
+      .s2[data-sub="4"] .s2-ph:nth-child(7) {
+        transform: scale(1);
+      }
+
+      .s2-panel {
+        position: absolute;
+        left: 50%;
+        bottom: 10%;
+        transform: translateX(-50%);
+        width: 88%;
+        max-width: 520px;
+        text-align: center;
+      }
+      .s2-debit {
+        font-weight: 800;
+        font-size: clamp(14px, 2vw, 22px);
+        margin-bottom: 6px;
+      }
+      .s2-lat {
+        font-weight: 700;
+        font-size: clamp(12px, 1.5vw, 17px);
+        margin-bottom: 8px;
+      }
+      .s2-caption {
+        font-size: clamp(11px, 1.35vw, 15px);
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.88);
+        line-height: 1.4;
+      }
+
+      .s2[data-sub="1"] .s2-debit {
+        color: var(--vert);
+      }
+      .s2[data-sub="1"] .s2-lat {
+        color: var(--vert);
+      }
+      .s2[data-sub="2"] .s2-debit {
+        color: var(--jaune);
+      }
+      .s2[data-sub="2"] .s2-lat {
+        color: var(--jaune);
+      }
+      .s2[data-sub="3"] .s2-debit,
+      .s2[data-sub="3"] .s2-lat {
+        color: var(--rouge);
+      }
+      .s2[data-sub="4"] .s2-debit,
+      .s2[data-sub="4"] .s2-lat {
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .s2-bars {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition:
+          opacity 0.4s ease-in-out,
+          max-height 0.4s ease-in-out,
+          margin 0.4s ease-in-out;
+      }
+      .s2[data-sub="2"] .s2-bars,
+      .s2[data-sub="3"] .s2-bars,
+      .s2[data-sub="4"] .s2-bars {
+        opacity: 1;
+        max-height: 80px;
+        margin-top: 10px;
+      }
+      .s2-mini {
+        width: 36px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .s2-mini > i {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+        width: 0%;
+        transition: width 0.6s ease-in-out;
+      }
+      .s2[data-sub="2"] .s2-mini > i {
+        width: 25%;
+        background: var(--jaune);
+      }
+      .s2[data-sub="3"] .s2-mini > i,
+      .s2[data-sub="4"] .s2-mini > i {
+        width: 12%;
+        background: var(--rouge);
+      }
+
+      .s2-rip {
+        position: absolute;
+        left: 50%;
+        top: 48%;
+        transform: translate(-50%, -50%);
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+      }
+      .s2-rip .ripples--red.on {
+        opacity: 0.85;
+      }
+
+      .s2-final {
+        position: absolute;
+        left: 50%;
+        bottom: 6%;
+        transform: translateX(-50%);
+        width: 92%;
+        max-width: 640px;
+        text-align: center;
+        font-weight: 800;
+        font-size: clamp(12px, 1.75vw, 19px);
+        line-height: 1.4;
+        opacity: 0;
+        transition: opacity 0.6s ease-in-out;
+      }
+      .s2-warn {
+        font-size: clamp(28px, 4vw, 40px);
+        margin-top: 8px;
+        animation: blinkWarn 1s ease-in-out infinite;
+      }
+      @keyframes blinkWarn {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.25;
+        }
+      }
+      .s2[data-sub="4"] .s2-final {
+        opacity: 1;
+      }
+      .s2[data-sub="4"] .s2-caption {
+        opacity: 0.35;
+      }
+
+      /* ——— Partie 3 ——— */
+      .s3-cols {
+        position: absolute;
+        top: 18%;
+        left: 3%;
+        right: 3%;
+        bottom: 14%;
+        display: flex;
+        gap: 3%;
+      }
+      .s3-col {
+        flex: 1;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 12px 14px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.03);
+        transition:
+          opacity 0.6s ease-in-out,
+          filter 0.6s ease-in-out;
+      }
+      .s3-col h3 {
+        margin: 0 0 10px;
+        font-size: clamp(12px, 1.5vw, 17px);
+        font-weight: 800;
+      }
+      .s3-col .mini-tower {
+        width: 48px;
+        margin-bottom: 12px;
+      }
+      .s3-col .mini-tower svg {
+        width: 100%;
+        height: auto;
+      }
+
+      .s3-row {
+        width: 100%;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .s3-row .ico {
+        font-size: clamp(18px, 2.2vw, 24px);
+        width: 32px;
+        text-align: center;
+      }
+      .s3-row .txt {
+        flex: 1;
+        font-size: clamp(10px, 1.15vw, 13px);
+        font-weight: 600;
+        line-height: 1.25;
+      }
+      .s3-bar-bg {
+        flex: 1;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 99px;
+        overflow: hidden;
+        min-width: 0;
+      }
+      .s3-bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 99px;
+        transition: width 0.8s ease-in-out;
+      }
+
+      .s3-left .s3-bar-fill {
+        background: linear-gradient(90deg, var(--orange), var(--rouge));
+      }
+      .s3-right .s3-bar-fill--v {
+        background: var(--vert);
+      }
+      .s3-right .s3-bar-fill--s {
+        background: var(--jaune);
+      }
+      .s3-right .s3-bar-fill--d {
+        background: var(--bleu);
+      }
+
+      .s3-left .s3-row.chaos .s3-bar-fill {
+        animation: chaos1 0.7s ease-in-out infinite alternate;
+      }
+      .s3-left .s3-row.chaos:nth-child(4) .s3-bar-fill {
+        animation-name: chaos2;
+        animation-duration: 0.55s;
+      }
+      .s3-left .s3-row.chaos:nth-child(5) .s3-bar-fill {
+        animation-name: chaos3;
+        animation-duration: 0.65s;
+      }
+      /* h3 + mini-tower = 2 enfants avant la 1re ligne de trafic */
+      .s3-left .s3-row.chaos:nth-child(3) .s3-bar-fill {
+        animation-duration: 0.7s;
+      }
+      @keyframes chaos1 {
+        0% {
+          width: 18%;
+        }
+        100% {
+          width: 32%;
+        }
+      }
+      @keyframes chaos2 {
+        0% {
+          width: 22%;
+        }
+        100% {
+          width: 28%;
+        }
+      }
+      @keyframes chaos3 {
+        0% {
+          width: 15%;
+        }
+        100% {
+          width: 35%;
+        }
+      }
+
+      .s3-note-l {
+        font-size: clamp(10px, 1.2vw, 13px);
+        color: rgba(255, 255, 255, 0.75);
+        text-align: center;
+        margin-top: auto;
+        font-weight: 600;
+      }
+      .s3-note-r {
+        font-size: clamp(10px, 1.2vw, 13px);
+        color: var(--vert);
+        text-align: center;
+        margin-top: 8px;
+        font-weight: 700;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+      }
+      .s3-arrows {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        margin: 6px 0;
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .s3-right {
+        opacity: 0.35;
+        filter: grayscale(0.3);
+      }
+      .s3[data-sub="1"] .s3-left .chaos .s3-bar-fill {
+        width: 24%;
+      }
+
+      .s3[data-sub="2"] .s3-right {
+        opacity: 1;
+        filter: none;
+      }
+      .s3[data-sub="2"] .s3-right .s3-bar-fill--v {
+        width: 92%;
+      }
+      .s3[data-sub="2"] .s3-right .s3-bar-fill--s {
+        width: 55%;
+      }
+      .s3[data-sub="2"] .s3-right .s3-bar-fill--d {
+        width: 32%;
+      }
+      .s3[data-sub="2"] .s3-note-r {
+        opacity: 1;
+      }
+      .s3[data-sub="2"] .s3-arrows {
+        display: flex;
+      }
+
+      .s3[data-sub="3"] .s3-note-r {
+        opacity: 0.85;
+      }
+
+      .s3-bottom {
+        position: absolute;
+        left: 50%;
+        bottom: 5%;
+        transform: translateX(-50%);
+        width: 94%;
+        max-width: 720px;
+        text-align: center;
+        font-weight: 800;
+        font-size: clamp(11px, 1.55vw, 18px);
+        line-height: 1.4;
+        opacity: 0;
+        transition: opacity 0.7s ease-in-out;
+      }
+      .s3[data-sub="3"] .s3-bottom {
+        opacity: 1;
+      }
+
+      /* Contrôles */
+      .controls {
+        position: absolute;
+        bottom: 10px;
+        left: 12px;
+        right: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 120;
+        pointer-events: none;
+      }
+      .controls button {
+        pointer-events: auto;
+        font-family: "Poppins", sans-serif;
+        font-size: clamp(13px, 1.5vw, 18px);
+        font-weight: 800;
+        padding: 10px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--blanc);
+        cursor: pointer;
+        transition:
+          background 0.2s ease-in-out,
+          transform 0.15s ease-in-out;
+      }
+      .controls button:active {
+        transform: scale(0.97);
+      }
+      .controls button:hover {
+        background: rgba(255, 255, 255, 0.14);
+      }
+
+      .s2-panel .s2-debit span {
+        font-weight: 800;
+      }
+
+      @media (max-width: 520px) {
+        .controls {
+          bottom: 8px;
+          left: 10px;
+          right: 10px;
+        }
+        .controls button {
+          padding: 9px 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap" id="app">
+      <div class="indicator" id="ind">Partie 1/3</div>
+
+      <!-- Partie 1 -->
+      <section class="scene s1 is-active" id="s1" data-sub="1" aria-label="Débit et distance">
+        <h2 class="scene-title">Débit selon la distance</h2>
+        <div class="bs-origin">
+          <div class="ripples ripples--blue">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+          </div>
+          <div class="ripples ripples--green">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+          </div>
+          <div class="ripples ripples--yellow">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+          </div>
+          <div class="ripples ripples--red">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+          </div>
+        </div>
+        <div class="tower-wrap">
+          <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="48" y="120" width="24" height="72" rx="3" fill="#3c4043" />
+            <rect x="42" y="188" width="36" height="10" rx="2" fill="#202124" />
+            <rect x="54" y="40" width="12" height="88" fill="#9aa0a6" />
+            <path d="M60 8 L88 42 L32 42 Z" fill="#1a73e8" />
+            <circle cx="60" cy="28" r="4" fill="#fbbc04" />
+            <line x1="60" y1="40" x2="60" y2="120" stroke="#bdc1c6" stroke-width="2" />
+          </svg>
+          <span class="bs-label">BS</span>
+        </div>
+
+        <div class="s1-phone s1-phone--a">
+          <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#5f6368" stroke-width="2" />
+            <rect x="10" y="14" width="28" height="44" rx="2" fill="#1a73e8" opacity="0.35" />
+            <rect x="18" y="64" width="12" height="3" rx="1" fill="#5f6368" />
+          </svg>
+          <span class="dist">500 m</span>
+          <div class="s1-bar-wrap"><div class="s1-bar"></div></div>
+          <span class="s1-mbps">40 Mbps</span>
+        </div>
+        <div class="s1-phone s1-phone--b">
+          <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#5f6368" stroke-width="2" />
+            <rect x="10" y="14" width="28" height="44" rx="2" fill="#fbbc04" opacity="0.25" />
+            <rect x="18" y="64" width="12" height="3" rx="1" fill="#5f6368" />
+          </svg>
+          <span class="dist">2 km</span>
+          <div class="s1-bar-wrap"><div class="s1-bar"></div></div>
+          <span class="s1-mbps">15 Mbps</span>
+        </div>
+        <div class="s1-phone s1-phone--c">
+          <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#5f6368" stroke-width="2" />
+            <rect x="10" y="14" width="28" height="44" rx="2" fill="#ea4335" opacity="0.25" />
+            <rect x="18" y="64" width="12" height="3" rx="1" fill="#5f6368" />
+          </svg>
+          <span class="dist">5 km</span>
+          <div class="s1-bar-wrap"><div class="s1-bar"></div></div>
+          <span class="s1-mbps">3 Mbps</span>
+        </div>
+
+        <div class="s1-legend">
+          Plus la distance augmente,<br />
+          le débit diminue
+          <div class="s1-arrow" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <!-- Partie 2 -->
+      <section class="scene s2" id="s2" data-sub="1" aria-label="Nombre d'utilisateurs">
+        <h2 class="scene-title">Impact du nombre d'utilisateurs</h2>
+        <div class="s2-rip">
+          <div class="ripples ripples--red" id="s2red">
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+            <div class="ripple"></div>
+          </div>
+        </div>
+        <div class="tower-mid">
+          <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="48" y="120" width="24" height="72" rx="3" fill="#3c4043" />
+            <rect x="42" y="188" width="36" height="10" rx="2" fill="#202124" />
+            <rect x="54" y="40" width="12" height="88" fill="#9aa0a6" />
+            <path d="M60 8 L88 42 L32 42 Z" fill="#1a73e8" />
+            <circle cx="60" cy="28" r="4" fill="#fbbc04" />
+          </svg>
+          <div class="bs-mid-label">BS</div>
+        </div>
+        <div class="s2-phones">
+          <div class="s2-ph">
+            <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#6e6e73" stroke-width="2" />
+              <rect x="10" y="14" width="28" height="44" rx="2" fill="#1a73e8" opacity="0.3" />
+            </svg>
+          </div>
+          <div class="s2-ph">
+            <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#6e6e73" stroke-width="2" />
+              <rect x="10" y="14" width="28" height="44" rx="2" fill="#1a73e8" opacity="0.3" />
+            </svg>
+          </div>
+          <div class="s2-ph">
+            <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#6e6e73" stroke-width="2" />
+              <rect x="10" y="14" width="28" height="44" rx="2" fill="#1a73e8" opacity="0.3" />
+            </svg>
+          </div>
+          <div class="s2-ph">
+            <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#6e6e73" stroke-width="2" />
+              <rect x="10" y="14" width="28" height="44" rx="2" fill="#1a73e8" opacity="0.3" />
+            </svg>
+          </div>
+          <div class="s2-ph">
+            <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#6e6e73" stroke-width="2" />
+              <rect x="10" y="14" width="28" height="44" rx="2" fill="#1a73e8" opacity="0.3" />
+            </svg>
+          </div>
+          <div class="s2-ph">
+            <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#6e6e73" stroke-width="2" />
+              <rect x="10" y="14" width="28" height="44" rx="2" fill="#1a73e8" opacity="0.3" />
+            </svg>
+          </div>
+          <div class="s2-ph">
+            <svg viewBox="0 0 48 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="6" y="4" width="36" height="70" rx="5" fill="#2d2d2d" stroke="#6e6e73" stroke-width="2" />
+              <rect x="10" y="14" width="28" height="44" rx="2" fill="#1a73e8" opacity="0.3" />
+            </svg>
+          </div>
+        </div>
+        <div class="s2-panel">
+          <div class="s2-debit" id="s2debit">Débit : 40 Mbps</div>
+          <div class="s2-lat" id="s2lat">Latence : 10 ms</div>
+          <div class="s2-caption" id="s2cap">1 utilisateur — connexion optimale</div>
+          <div class="s2-bars" id="s2bars" aria-hidden="true"></div>
+        </div>
+        <div class="s2-final">
+          Plus d'utilisateurs = moins de débit<br />
+          et plus de latence pour chacun
+          <div class="s2-warn" aria-hidden="true">⚠️</div>
+        </div>
+      </section>
+
+      <!-- Partie 3 -->
+      <section class="scene s3" id="s3" data-sub="1" aria-label="QoS">
+        <h2 class="scene-title">Qualité de Service (QoS)</h2>
+        <div class="s3-cols">
+          <div class="s3-col s3-left">
+            <h3>Sans QoS ❌</h3>
+            <div class="mini-tower">
+              <svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="32" y="55" width="16" height="40" rx="2" fill="#3c4043" />
+                <path d="M40 12 L58 38 L22 38 Z" fill="#5f6368" />
+              </svg>
+            </div>
+            <div class="s3-row chaos">
+              <span class="ico">📞</span>
+              <span class="txt">VoIP</span>
+              <div class="s3-bar-bg"><div class="s3-bar-fill"></div></div>
+            </div>
+            <div class="s3-row chaos">
+              <span class="ico">🎥</span>
+              <span class="txt">Streaming</span>
+              <div class="s3-bar-bg"><div class="s3-bar-fill"></div></div>
+            </div>
+            <div class="s3-row chaos">
+              <span class="ico">📥</span>
+              <span class="txt">Téléchargement</span>
+              <div class="s3-bar-bg"><div class="s3-bar-fill"></div></div>
+            </div>
+            <p class="s3-note-l">Pas de priorité — tout est lent</p>
+          </div>
+          <div class="s3-col s3-right">
+            <h3>Avec QoS ✅</h3>
+            <div class="mini-tower">
+              <svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="32" y="55" width="16" height="40" rx="2" fill="#3c4043" />
+                <path d="M40 12 L58 38 L22 38 Z" fill="#1a73e8" />
+              </svg>
+            </div>
+            <div class="s3-arrows"><span>↓</span><span>↓</span><span>↓</span></div>
+            <div class="s3-row">
+              <span class="ico">📞</span>
+              <div class="txt">Priorité 1 — 5 Mbps garanti</div>
+              <div class="s3-bar-bg"><div class="s3-bar-fill s3-bar-fill--v"></div></div>
+            </div>
+            <div class="s3-row">
+              <span class="ico">🎥</span>
+              <div class="txt">Priorité 2 — 10 Mbps</div>
+              <div class="s3-bar-bg"><div class="s3-bar-fill s3-bar-fill--s"></div></div>
+            </div>
+            <div class="s3-row">
+              <span class="ico">📥</span>
+              <div class="txt">Priorité 3 — ce qui reste</div>
+              <div class="s3-bar-bg"><div class="s3-bar-fill s3-bar-fill--d"></div></div>
+            </div>
+            <p class="s3-note-r">QoS priorise intelligemment</p>
+          </div>
+        </div>
+        <p class="s3-bottom">Le QoS garantit la qualité<br />selon le type de service</p>
+      </section>
+
+      <div class="controls">
+        <button type="button" id="btnRestart">⏮ Recommencer</button>
+        <button type="button" id="btnNext">⏭ Partie suivante</button>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var T_PART = 15;
+        var T_TOTAL = 45;
+        var s1 = document.getElementById("s1");
+        var s2 = document.getElementById("s2");
+        var s3 = document.getElementById("s3");
+        var ind = document.getElementById("ind");
+        var s2debit = document.getElementById("s2debit");
+        var s2lat = document.getElementById("s2lat");
+        var s2cap = document.getElementById("s2cap");
+        var s2bars = document.getElementById("s2bars");
+        var s2red = document.getElementById("s2red");
+
+        var sec = 0;
+        var running = true;
+        var last = performance.now();
+
+        function buildMiniBars(n) {
+          s2bars.innerHTML = "";
+          for (var i = 0; i < n; i++) {
+            var d = document.createElement("div");
+            d.className = "s2-mini";
+            d.innerHTML = "<i></i>";
+            s2bars.appendChild(d);
+          }
+        }
+
+        function setS2Red(on) {
+          s2red.classList.toggle("on", on);
+        }
+
+        function updateS2(sub) {
+          setS2Red(false);
+          if (sub === 1) {
+            s2debit.textContent = "Débit : 40 Mbps";
+            s2lat.textContent = "Latence : 10 ms";
+            s2lat.style.color = "";
+            s2cap.textContent = "1 utilisateur — connexion optimale";
+            s2bars.innerHTML = "";
+          } else if (sub === 2) {
+            s2debit.textContent = "Débit : 10 Mbps / utilisateur";
+            s2lat.textContent = "Latence : 45 ms";
+            s2cap.textContent = "4 utilisateurs — réseau chargé";
+            buildMiniBars(4);
+          } else if (sub === 3) {
+            s2debit.textContent = "Débit : 4 Mbps / utilisateur";
+            s2lat.textContent = "Latence : 120 ms";
+            s2cap.textContent = "7 utilisateurs — réseau saturé";
+            buildMiniBars(7);
+            setS2Red(true);
+          } else {
+            s2debit.textContent = "Débit : 4 Mbps / utilisateur";
+            s2lat.textContent = "Latence : 120 ms";
+            s2cap.textContent = "7 utilisateurs — réseau saturé";
+            buildMiniBars(7);
+            setS2Red(true);
+          }
+        }
+
+        function subPart1(rel) {
+          if (rel < 3) return 1;
+          if (rel < 6) return 2;
+          if (rel < 9) return 3;
+          if (rel < 12) return 4;
+          return 5;
+        }
+        function subPart2(rel) {
+          if (rel < 3) return 1;
+          if (rel < 6) return 2;
+          if (rel < 9) return 3;
+          return 4;
+        }
+        function subPart3(rel) {
+          if (rel < 3) return 1;
+          if (rel < 8) return 2;
+          return 3;
+        }
+
+        function apply() {
+          var part = Math.min(2, Math.floor(sec / T_PART));
+          var rel = sec - part * T_PART;
+
+          s1.classList.toggle("is-active", part === 0);
+          s2.classList.toggle("is-active", part === 1);
+          s3.classList.toggle("is-active", part === 2);
+
+          ind.textContent = "Partie " + (part + 1) + "/3";
+
+          if (part === 0) {
+            s1.setAttribute("data-sub", String(subPart1(rel)));
+          }
+          if (part === 1) {
+            var s2s = subPart2(rel);
+            s2.setAttribute("data-sub", String(s2s));
+            updateS2(s2s);
+          }
+          if (part === 2) {
+            s3.setAttribute("data-sub", String(subPart3(rel)));
+          }
+        }
+
+        function loop(ts) {
+          if (running) {
+            var dt = (ts - last) / 1000;
+            last = ts;
+            sec += dt;
+            if (sec >= T_TOTAL) sec -= T_TOTAL;
+          } else {
+            last = ts;
+          }
+          apply();
+          requestAnimationFrame(loop);
+        }
+
+        document.getElementById("btnRestart").addEventListener("click", function () {
+          sec = 0;
+          last = performance.now();
+          running = true;
+          apply();
+        });
+
+        document.getElementById("btnNext").addEventListener("click", function () {
+          var p = Math.floor(sec / T_PART);
+          if (p >= 2) {
+            sec = 0;
+          } else {
+            sec = (p + 1) * T_PART;
+          }
+          last = performance.now();
+          apply();
+        });
+
+        apply();
+        requestAnimationFrame(loop);
+      })();
+    </script>
+  </body>
+</html>

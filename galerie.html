@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Galerie — WiMAX</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="page-header">
+        <button type="button" class="btn-back" onclick="history.back()" aria-label="Retour">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <h1 class="page-header__title">Galerie</h1>
+        <span class="page-header__balance" aria-hidden="true"></span>
+      </header>
+
+      <p class="galerie-view-hint">Appuyez sur une photo pour l’afficher en entier (aperçu seul, sans modification).</p>
+
+      <h2 class="section-title">Notre équipe</h2>
+      <div class="team-row">
+        <div class="team-member">
+          <div class="team-member__avatar team-member__avatar--adjust">
+            <img src="assets/membres/me.jpeg" alt="" />
+          </div>
+          <span>Abdinasser Robleh</span>
+        </div>
+        <div class="team-member">
+          <div class="team-member__avatar">
+            <img src="assets/membres/m2.jpg" alt="" />
+          </div>
+          <span>Lucas Bernard</span>
+        </div>
+        <div class="team-member">
+          <div class="team-member__avatar">
+            <img src="assets/membres/m3.jpg" alt="" />
+          </div>
+          <span>Emma Petit</span>
+        </div>
+      </div>
+
+      <h2 class="section-title">Encadreur</h2>
+      <div class="encadreur-block">
+        <img src="assets/membres/prof.jpg" alt="" width="80" height="80" />
+        <span class="name">Jean Dupont</span>
+      </div>
+
+      <h2 class="section-title">Souvenirs</h2>
+      <p class="galerie-souvenirs-hint">
+        Maintenez longuement <strong>votre</strong> photo (0,6&nbsp;s) pour la supprimer. Les photos des autres ne sont pas supprimables sans compte organisateur.
+      </p>
+      <div class="souvenirs-grid" id="souvenirs-grid"></div>
+
+      <div class="galerie-admin-bar">
+        <button type="button" class="btn-link" id="btn-open-admin">Espace organisateur</button>
+        <div class="galerie-admin-badge" id="admin-badge" aria-live="polite">
+          <span>Mode organisateur — vous pouvez supprimer toute photo.</span>
+          <button type="button" class="btn-muted" id="btn-admin-logout">Déconnexion</button>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="fab-galerie" id="fab-galerie" aria-label="Ajouter un souvenir">+</button>
+
+    <input type="file" id="input-camera" class="sr-only" accept="image/*" capture="environment" />
+    <input type="file" id="input-gallery" class="sr-only" accept="image/*" />
+
+    <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-box" id="modal-box-inner">
+        <div id="modal-step-prenom">
+          <h3>Votre prénom ?</h3>
+          <input type="text" id="input-prenom" maxlength="40" placeholder="Prénom" autocomplete="given-name" />
+          <div class="modal-actions-row">
+            <button type="button" class="btn-muted" id="btn-prenom-cancel">Annuler</button>
+            <button type="button" class="btn-primary" id="btn-prenom-ok">OK</button>
+          </div>
+        </div>
+        <div id="modal-step-source" class="hidden">
+          <h3>Source de la photo</h3>
+          <div class="modal-actions">
+            <button type="button" class="btn-choice" id="btn-source-camera">📷 Prendre une photo</button>
+            <button type="button" class="btn-choice" id="btn-source-gallery">🖼️ Importer une photo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="galerie-lightbox" id="galerie-lightbox" role="dialog" aria-modal="true" aria-label="Photo en grand">
+      <button type="button" class="galerie-lightbox__close" id="galerie-lightbox-close" aria-label="Fermer">&times;</button>
+      <img class="galerie-lightbox__img" id="galerie-lightbox-img" src="" alt="Aperçu" />
+    </div>
+
+    <div class="modal-overlay" id="modal-admin-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title">
+      <div class="modal-box" id="modal-admin-box">
+        <h3 id="admin-modal-title">Connexion organisateur</h3>
+        <p style="font-size: 0.8rem; color: var(--sous-texte); margin: -8px 0 12px; text-align: center">
+          Code fourni par l’encadrant. Pour le changer, éditez <code>ADMIN_PIN</code> dans <code>js/galerie.js</code>.
+        </p>
+        <input type="password" id="input-admin-pin" maxlength="64" placeholder="Code" autocomplete="current-password" />
+        <div class="modal-actions-row">
+          <button type="button" class="btn-muted" id="btn-admin-cancel">Annuler</button>
+          <button type="button" class="btn-primary" id="btn-admin-login">Connexion</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/galerie.js"></script>
+  </body>
+</html>

@@ -131,7 +131,7 @@
     input.className = "identite-modal__input";
     input.maxLength = MAX_NAME;
     input.autocomplete = "nickname";
-    input.placeholder = "Ex. Ali";
+    input.placeholder = "Ex. Ali Mohamed";
     input.value = firstRun ? "" : parsed.name;
 
     var actions = document.createElement("div");

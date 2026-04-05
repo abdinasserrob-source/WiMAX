@@ -49,7 +49,7 @@
           </svg>
           <div>
             <strong>Validité temporaire</strong>
-            <p>Ici le visuel encode une URL de démonstration ; en production, vous pourriez lier l’URL du portail et un jeton expirant sous 24 h.</p>
+            <p>Le partage envoie le lien public du portail WiMAX (court ou page d’accueil selon l’endroit où tu ouvres ce site).</p>
           </div>
         </div>
         <div class="share-info-item">
@@ -82,20 +82,37 @@
     <script src="js/app.js"></script>
     <script>
       (function () {
-        var demoUrl = "https://www.google.com";
+        /**
+         * Lien partagé : sur GitHub Pages → accueil du dépôt ; sinon lien court QR (production).
+         * Évite file:// et localhost → toujours une URL absolue valide.
+         */
+        function getPortalShareUrl() {
+          var h = window.location.hostname || "";
+          if (h.indexOf("github.io") !== -1) {
+            var path = window.location.pathname || "";
+            return (
+              window.location.origin +
+              path.replace(/share-qr\.html$/i, "home.html")
+            );
+          }
+          return "https://qrco.de/WiMAX";
+        }
 
         document.getElementById("share-portal-btn").addEventListener("click", function () {
-          var text = "Scanne le code sur la page ou ouvre ce lien : " + demoUrl;
+          var url = getPortalShareUrl();
+          /* Ne pas répéter l’URL dans text + url : beaucoup d’apps affichent alors le lien en double. */
+          var body =
+            "Scanne le QR sur cette page « Partager l’accès », ou ouvre le portail WiMAX avec le lien joint.";
           if (navigator.share) {
             navigator
               .share({
-                title: "Portail WiMAX — partage démo",
-                text: text,
-                url: demoUrl,
+                title: "Portail WiMAX — accès",
+                text: body,
+                url: url,
               })
               .catch(function () {});
           } else {
-            alert(text);
+            alert(body + "\n\n" + url);
           }
         });
 

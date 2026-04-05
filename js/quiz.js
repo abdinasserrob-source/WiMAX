@@ -81,6 +81,10 @@
     return monID;
   }
 
+  function getMonIdentite() {
+    return (localStorage.getItem("monIdentite") || "").trim();
+  }
+
   /** Une ligne par entrée Firebase (clé = monID appareil). Pas de fusion par identité. */
   function rowsFromFirebaseVal(val) {
     var rows = [];
@@ -218,6 +222,10 @@
   var elClassementList = document.getElementById("quiz-classement-view-list");
   var classementFbHandler = null;
 
+  var elResultUserBadge = document.getElementById("quiz-result-user-badge");
+  var elResultScoreInline = document.getElementById("quiz-result-score-inline");
+  var elResultScoreJoin = document.getElementById("quiz-result-score-join");
+
   function loadArchivesFromStorage() {
     var raw = localStorage.getItem(STORAGE_ARCHIVE);
     var list = [];
@@ -272,6 +280,7 @@
     });
     elClassementList.innerHTML = "";
     var myDeviceId = getMonID();
+    var monIdentite = getMonIdentite();
     if (!rows.length) {
       var empty = document.createElement("li");
       empty.className = "quiz-classement-view__empty";
@@ -281,11 +290,38 @@
     }
     var medals = ["🥇", "🥈", "🥉"];
     rows.forEach(function (e, i) {
+      var isMe = Boolean(myDeviceId && e.deviceId === myDeviceId);
+      if (!isMe && !myDeviceId && monIdentite && e.identite === monIdentite) {
+        isMe = true;
+      }
+
       var li = document.createElement("li");
       li.className = "quiz-classement-view__row";
-      if (myDeviceId && e.deviceId === myDeviceId) li.classList.add("quiz-classement-view__row--me");
+      if (isMe) li.classList.add("quiz-classement-view__row--me");
+
+      var inner = document.createElement("div");
+      inner.className = "quiz-classement-view__row-inner";
+
       var prefix = i < 3 ? medals[i] + " " : "    ";
-      li.textContent = prefix + e.identite + "     " + e.score + "/" + e.total;
+      var nameSpan = document.createElement("span");
+      nameSpan.className = "quiz-classement-view__row-name";
+      nameSpan.textContent = prefix + e.identite;
+
+      var scoreWrap = document.createElement("span");
+      scoreWrap.className = "quiz-classement-view__row-scores";
+      var scoreSpan = document.createElement("span");
+      scoreSpan.textContent = e.score + "/" + e.total;
+      scoreWrap.appendChild(scoreSpan);
+      if (isMe) {
+        var vous = document.createElement("span");
+        vous.className = "quiz-classement-view__vous";
+        vous.textContent = "● Vous";
+        scoreWrap.appendChild(vous);
+      }
+
+      inner.appendChild(nameSpan);
+      inner.appendChild(scoreWrap);
+      li.appendChild(inner);
       elClassementList.appendChild(li);
     });
   }
@@ -335,6 +371,27 @@
     clearClassementMsg();
     var total = state.session.length;
     elScoreNum.textContent = state.score + "/" + total;
+
+    var identiteResult =
+      window.WiMAXIdentite && typeof window.WiMAXIdentite.get === "function"
+        ? window.WiMAXIdentite.get()
+        : "";
+    identiteResult = String(identiteResult || "").trim();
+    if (elResultScoreInline) {
+      elResultScoreInline.textContent = state.score + "/" + total;
+    }
+    if (elResultUserBadge) {
+      if (identiteResult) {
+        elResultUserBadge.textContent = identiteResult;
+        elResultUserBadge.classList.remove("hidden");
+      } else {
+        elResultUserBadge.textContent = "";
+        elResultUserBadge.classList.add("hidden");
+      }
+    }
+    if (elResultScoreJoin) {
+      elResultScoreJoin.classList.toggle("hidden", !identiteResult);
+    }
 
     if (state.score >= total * 0.8) {
       elBadge.textContent = "Bravo !";

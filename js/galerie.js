@@ -1,18 +1,18 @@
 /**
- * Galerie — souvenirs : { id, identite, image, date } (identite = localStorage monIdentite).
- * Appui long : supprimer si identite correspond, ou mode organisateur.
+ * Galerie — souvenirs dans Firebase Realtime Database (souvenirs/).
+ * identite / monID depuis localStorage (WiMAXIdentite + __WIMAX_getMonID).
  */
 (function () {
-  var KEY_SOUVENIRS = "souvenirs";
+  var REF_SOUVENIRS = "souvenirs";
   var KEY_ADMIN_UNTIL = "galerieAdminUntil";
   var LONG_PRESS_MS = 600;
   /** Après ouverture du menu, ignorer le clic « fantôme » (touchend/mouseup → click) qui refermait tout de suite. */
   var menuOpenGuardUntil = 0;
   var MENU_OPEN_GUARD_MS = 550;
-  /** Changez ce code (et gardez-le secret côté encadrant — il reste lisible dans le fichier, pas de serveur ici). */
-  var ADMIN_PIN = "wimax";
-  /** Au-delà, certains navigateurs échouent ou figent la page (data URL en mémoire). */
+  var ADMIN_PIN = "wimax2025";
   var MAX_IMAGE_BYTES = 12 * 1024 * 1024;
+  var COMPRESS_THRESHOLD_BYTES = 500 * 1024;
+  var COMPRESS_JPEG_QUALITY = 0.6;
 
   var grid = document.getElementById("souvenirs-grid");
   var fab = document.getElementById("fab-galerie");
@@ -39,6 +39,20 @@
   var lightboxImg = document.getElementById("galerie-lightbox-img");
   var lightboxClose = document.getElementById("galerie-lightbox-close");
 
+  /** Dernière liste depuis Firebase (tri nouveau → ancien). */
+  var currentSouvenirItems = [];
+
+  function getDb() {
+    return window.__WIMAX_FB_DB || null;
+  }
+
+  function getMyMonID() {
+    if (typeof window.__WIMAX_getMonID === "function") {
+      return window.__WIMAX_getMonID();
+    }
+    return (localStorage.getItem("monID") || "").trim();
+  }
+
   function openLightbox(src) {
     if (!lightbox || !lightboxImg || !src) return;
     clearLongPressState();
@@ -54,13 +68,6 @@
     lightboxImg.removeAttribute("src");
     lightboxImg.alt = "";
     document.body.style.overflow = "";
-  }
-
-  function normPrenom(s) {
-    return String(s || "")
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, " ");
   }
 
   function isAdmin() {
@@ -91,70 +98,108 @@
     if (window.WiMAXIdentite && typeof window.WiMAXIdentite.get === "function") {
       return window.WiMAXIdentite.get() || "";
     }
-    return "";
+    return (localStorage.getItem("monIdentite") || "").trim();
   }
 
   function displayIdentiteForItem(item) {
-    return item.identite || item.prenom || "—";
+    return item.identite || "—";
   }
 
-  function namePartAfterEmoji(full) {
-    full = String(full || "").trim();
-    var i = full.indexOf(" ");
-    return i === -1 ? full : full.slice(i + 1).trim();
+  /** Même appareil = même monID (stocké avec la photo). */
+  function isMyPhoto(item) {
+    var mine = getMyMonID();
+    if (!mine || !item || !item.monID) return false;
+    return String(item.monID) === String(mine);
   }
 
-  function isOwnerPhoto(item) {
-    var mine = getMonIdentite();
-    if (!mine) return false;
-    if (item.identite === mine) return true;
-    if (item.identite) return false;
-    var legacy = (item.prenom || "").trim();
-    if (!legacy) return false;
-    return normPrenom(legacy) === normPrenom(namePartAfterEmoji(mine));
+  function estimateDataUrlBytes(dataUrl) {
+    if (typeof dataUrl !== "string") return 0;
+    var i = dataUrl.indexOf(",");
+    if (i === -1) return 0;
+    var b64 = dataUrl.slice(i + 1);
+    var padding = 0;
+    if (b64.endsWith("==")) padding = 2;
+    else if (b64.endsWith("=")) padding = 1;
+    return Math.max(0, Math.floor((b64.length * 3) / 4) - padding);
   }
 
-  /** Menu appui long : propriétaire (dernierPrenom) ou organisateur. */
-  function canOpenDeleteMenu(item) {
-    return isOwnerPhoto(item) || isAdmin();
+  function compressDataUrlToJpeg(dataUrl, quality, callback) {
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        var ctx = canvas.getContext("2d");
+        if (!ctx) {
+          callback(new Error("Canvas indisponible sur cet appareil."));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        var out = canvas.toDataURL("image/jpeg", quality);
+        callback(null, out);
+      } catch (e) {
+        callback(e);
+      }
+    };
+    img.onerror = function () {
+      callback(new Error("Impossible de décoder l’image pour la compression."));
+    };
+    img.src = dataUrl;
   }
 
-  function canDeleteSouvenir(item) {
-    return isOwnerPhoto(item) || isAdmin();
-  }
-
-  function blockImageContextAndDrag(img) {
-    if (!img) return;
-    img.addEventListener("contextmenu", function (e) {
-      e.preventDefault();
-    });
-    img.addEventListener("dragstart", function (e) {
-      e.preventDefault();
-    });
-  }
-
-  function loadSouvenirs() {
+  function maybeCompressBase64(dataUrl, callback) {
     try {
-      var raw = localStorage.getItem(KEY_SOUVENIRS);
-      var arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
+      if (estimateDataUrlBytes(dataUrl) <= COMPRESS_THRESHOLD_BYTES) {
+        callback(null, dataUrl);
+        return;
+      }
+      compressDataUrlToJpeg(dataUrl, COMPRESS_JPEG_QUALITY, callback);
     } catch (e) {
-      return [];
+      callback(e);
     }
   }
 
-  function saveSouvenirs(arr) {
-    localStorage.setItem(KEY_SOUVENIRS, JSON.stringify(arr));
+  function readFileAsDataURL(file, callback) {
+    var reader = new FileReader();
+    reader.onerror = function () {
+      callback(new Error("Impossible de lire ce fichier. Réessaie avec une photo JPG ou PNG."));
+    };
+    reader.onload = function () {
+      var dataUrl = reader.result;
+      if (typeof dataUrl !== "string" || dataUrl.length < 32) {
+        callback(new Error("Import incomplet. Réessaie avec une autre photo."));
+        return;
+      }
+      callback(null, dataUrl);
+    };
+    reader.readAsDataURL(file);
   }
 
-  function formatDate(d) {
-    return (
-      d.getFullYear() +
-      "-" +
-      String(d.getMonth() + 1).padStart(2, "0") +
-      "-" +
-      String(d.getDate()).padStart(2, "0")
-    );
+  function snapshotToItems(snap) {
+    var val = snap.val();
+    if (!val || typeof val !== "object") return [];
+    return Object.keys(val)
+      .map(function (key) {
+        var o = val[key];
+        if (!o || typeof o !== "object") return null;
+        return Object.assign({ id: key }, o);
+      })
+      .filter(Boolean)
+      .sort(function (a, b) {
+        return a.id < b.id ? 1 : a.id > b.id ? -1 : 0;
+      });
+  }
+
+  function removeSouvenir(photoId, callback) {
+    var db = getDb();
+    if (!db || !photoId) {
+      if (callback) callback(new Error("Suppression impossible."));
+      return;
+    }
+    db.ref(REF_SOUVENIRS + "/" + photoId).remove(function (err) {
+      if (callback) callback(err || null);
+    });
   }
 
   function clearLongPressState() {
@@ -179,106 +224,189 @@
     if (inputAdminPin) inputAdminPin.value = "";
   }
 
+  function blockImageContextAndDrag(img) {
+    if (!img) return;
+    img.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+    });
+    img.addEventListener("dragstart", function (e) {
+      e.preventDefault();
+    });
+  }
+
+  function formatMetaDateTime(item) {
+    var d = item.date || "";
+    var h = item.heure || "";
+    if (d && h) return d + " · " + h;
+    return d || h || "";
+  }
+
   function render() {
     updateAdminUI();
-    var items = loadSouvenirs();
+    if (!grid) return;
+
+    var items = currentSouvenirItems;
+    var admin = isAdmin();
+
     grid.innerHTML = "";
-    items
-      .slice()
-      .reverse()
-      .forEach(function (item) {
-        var menuAllowed = canOpenDeleteMenu(item);
-        var owner = isOwnerPhoto(item);
 
-        var wrap = document.createElement("div");
-        wrap.className = "souvenir-item" + (menuAllowed ? "" : " souvenir-item--locked");
-        wrap.dataset.id = String(item.id);
+    items.forEach(function (item) {
+      var myPhoto = isMyPhoto(item);
 
-        var thumb = document.createElement("div");
-        thumb.className = "souvenir-item__thumb";
+      var wrap = document.createElement("div");
+      wrap.className = "souvenir-item" + (myPhoto ? "" : " souvenir-item--locked");
+      wrap.dataset.id = String(item.id);
 
-        var img = document.createElement("img");
-        img.src = item.image;
-        img.alt = displayIdentiteForItem(item) ? "Souvenir — " + displayIdentiteForItem(item) : "Souvenir";
-        img.setAttribute("draggable", "false");
-        blockImageContextAndDrag(img);
+      var thumb = document.createElement("div");
+      thumb.className = "souvenir-item__thumb";
 
-        thumb.appendChild(img);
+      var img = document.createElement("img");
+      img.src = item.image || "";
+      img.alt = displayIdentiteForItem(item) ? "Souvenir — " + displayIdentiteForItem(item) : "Souvenir";
+      img.setAttribute("draggable", "false");
+      blockImageContextAndDrag(img);
 
-        var menu = document.createElement("div");
-        menu.className = "souvenir-item__menu";
-        menu.setAttribute("aria-hidden", "true");
-        var menuBtn = document.createElement("button");
-        menuBtn.type = "button";
-        menuBtn.className = "souvenir-item__menu-btn";
-        menuBtn.textContent = owner ? "🗑️ Supprimer ma photo" : "🗑️ Supprimer (organisateur)";
-        menuBtn.setAttribute("aria-label", owner ? "Supprimer ma photo" : "Supprimer cette photo en tant qu’organisateur");
-        menu.appendChild(menuBtn);
-        thumb.appendChild(menu);
+      thumb.appendChild(img);
 
-        menuBtn.addEventListener("click", function (e) {
+      if (admin) {
+        var adminDel = document.createElement("button");
+        adminDel.type = "button";
+        adminDel.className = "souvenir-item__admin-del";
+        adminDel.textContent = "🗑️";
+        adminDel.setAttribute("aria-label", "Supprimer cette photo (organisateur)");
+        adminDel.addEventListener("touchstart", function (e) {
           e.stopPropagation();
-          if (!canDeleteSouvenir(item)) return;
-          var msg = owner
-            ? "🗑️ Supprimer ma photo ?"
-            : "Supprimer cette photo (organisateur) ?";
-          if (!window.confirm(msg)) return;
-          var id = Number(wrap.dataset.id);
-          var next = loadSouvenirs().filter(function (x) {
-            return x.id !== id;
+        });
+        adminDel.addEventListener("mousedown", function (e) {
+          e.stopPropagation();
+        });
+        adminDel.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (!window.confirm("Supprimer cette photo (organisateur) ?")) return;
+          removeSouvenir(item.id, function (err) {
+            if (err) alert(err.message || "Erreur lors de la suppression.");
           });
-          saveSouvenirs(next);
-          clearLongPressState();
-          render();
+        });
+        thumb.appendChild(adminDel);
+      }
+
+      var menu = document.createElement("div");
+      menu.className = "souvenir-item__menu";
+      menu.setAttribute("aria-hidden", "true");
+
+      if (myPhoto) {
+        var menuTitle = document.createElement("div");
+        menuTitle.className = "souvenir-item__menu-title";
+        menuTitle.textContent = "🗑️ Supprimer ma photo ?";
+
+        var menuRow = document.createElement("div");
+        menuRow.className = "souvenir-item__menu-row";
+
+        var btnCancelMenu = document.createElement("button");
+        btnCancelMenu.type = "button";
+        btnCancelMenu.className = "souvenir-item__menu-btn souvenir-item__menu-btn--secondary";
+        btnCancelMenu.textContent = "Annuler";
+
+        var btnConfirmMenu = document.createElement("button");
+        btnConfirmMenu.type = "button";
+        btnConfirmMenu.className = "souvenir-item__menu-btn souvenir-item__menu-btn--danger";
+        btnConfirmMenu.textContent = "Confirmer";
+
+        menu.addEventListener("touchstart", function (e) {
+          e.stopPropagation();
+        });
+        menu.addEventListener("mousedown", function (e) {
+          e.stopPropagation();
         });
 
-        var meta = document.createElement("div");
-        meta.className = "souvenir-item__meta";
-        meta.innerHTML = '<div class="souvenir-item__prenom"></div><div class="souvenir-item__date"></div>';
-        meta.querySelector(".souvenir-item__prenom").textContent = displayIdentiteForItem(item);
-        meta.querySelector(".souvenir-item__date").textContent = item.date || "";
+        btnCancelMenu.addEventListener("click", function (e) {
+          e.stopPropagation();
+          wrap.classList.remove("show-menu");
+          menu.setAttribute("aria-hidden", "true");
+        });
 
-        wrap.appendChild(thumb);
-        wrap.appendChild(meta);
-
-        var pressTimer = null;
-
-        function startPress() {
-          if (!menuAllowed) return;
-          clearTimeout(pressTimer);
-          pressTimer = setTimeout(function () {
+        btnConfirmMenu.addEventListener("click", function (e) {
+          e.stopPropagation();
+          removeSouvenir(item.id, function (err) {
+            if (err) {
+              alert(err.message || "Erreur lors de la suppression.");
+              return;
+            }
             clearLongPressState();
-            wrap.classList.add("show-menu");
-            menu.setAttribute("aria-hidden", "false");
-            pressTimer = null;
-            menuOpenGuardUntil = Date.now() + MENU_OPEN_GUARD_MS;
-          }, LONG_PRESS_MS);
-        }
-
-        function cancelPress() {
-          if (pressTimer) {
-            clearTimeout(pressTimer);
-            pressTimer = null;
-          }
-        }
-
-        if (menuAllowed) {
-          thumb.addEventListener("touchstart", startPress, { passive: true });
-          thumb.addEventListener("touchend", cancelPress);
-          thumb.addEventListener("touchcancel", cancelPress);
-          thumb.addEventListener("mousedown", function (e) {
-            if (e.button !== 0) return;
-            startPress();
           });
-          thumb.addEventListener("mouseup", cancelPress);
-        }
-
-        thumb.addEventListener("contextmenu", function (e) {
-          e.preventDefault();
         });
 
-        grid.appendChild(wrap);
+        menuRow.appendChild(btnCancelMenu);
+        menuRow.appendChild(btnConfirmMenu);
+        menu.appendChild(menuTitle);
+        menu.appendChild(menuRow);
+        thumb.appendChild(menu);
+      }
+
+      var meta = document.createElement("div");
+      meta.className = "souvenir-item__meta";
+      meta.innerHTML =
+        '<div class="souvenir-item__identite-row"><span class="souvenir-item__prenom"></span></div><div class="souvenir-item__date"></div>';
+      var idRow = meta.querySelector(".souvenir-item__identite-row");
+      idRow.querySelector(".souvenir-item__prenom").textContent = displayIdentiteForItem(item);
+      if (myPhoto) {
+        idRow.classList.add("souvenir-item__identite-row--mine");
+        var moiBadge = document.createElement("span");
+        moiBadge.className = "souvenir-item__moi-badge";
+        moiBadge.textContent = "📍 Moi";
+        idRow.appendChild(moiBadge);
+      }
+      meta.querySelector(".souvenir-item__date").textContent = formatMetaDateTime(item);
+
+      wrap.appendChild(thumb);
+      wrap.appendChild(meta);
+
+      var pressTimer = null;
+
+      function startPress() {
+        if (!myPhoto) return;
+        clearTimeout(pressTimer);
+        pressTimer = setTimeout(function () {
+          clearLongPressState();
+          wrap.classList.add("show-menu");
+          menu.setAttribute("aria-hidden", "false");
+          pressTimer = null;
+          menuOpenGuardUntil = Date.now() + MENU_OPEN_GUARD_MS;
+        }, LONG_PRESS_MS);
+      }
+
+      function cancelPress() {
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+      }
+
+      thumb.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
       });
+      thumb.addEventListener(
+        "touchstart",
+        function (e) {
+          e.preventDefault();
+          if (myPhoto) startPress();
+        },
+        { passive: false }
+      );
+
+      if (myPhoto) {
+        thumb.addEventListener("mousedown", function (e) {
+          if (e.button !== 0) return;
+          startPress();
+        });
+        thumb.addEventListener("mouseup", cancelPress);
+        thumb.addEventListener("mouseleave", cancelPress);
+        thumb.addEventListener("touchend", cancelPress);
+        thumb.addEventListener("touchcancel", cancelPress);
+      }
+
+      grid.appendChild(wrap);
+    });
 
     if (items.length === 0) {
       var empty = document.createElement("p");
@@ -289,6 +417,33 @@
       empty.textContent = "Aucun souvenir pour le moment. Appuyez sur + pour en ajouter.";
       grid.appendChild(empty);
     }
+  }
+
+  function attachFirebaseListener() {
+    var db = getDb();
+    if (!db) {
+      if (grid) {
+        grid.innerHTML = "";
+        var p = document.createElement("p");
+        p.style.gridColumn = "1 / -1";
+        p.style.textAlign = "center";
+        p.style.color = "var(--sous-texte)";
+        p.style.fontSize = "0.85rem";
+        p.textContent = "Galerie indisponible : Firebase n’est pas chargé. Vérifie la connexion.";
+        grid.appendChild(p);
+      }
+      return;
+    }
+    db.ref(REF_SOUVENIRS).on(
+      "value",
+      function (snap) {
+        currentSouvenirItems = snapshotToItems(snap);
+        render();
+      },
+      function (err) {
+        alert("Erreur de lecture Firebase : " + ((err && err.message) || String(err)));
+      }
+    );
   }
 
   function openModal() {
@@ -312,59 +467,100 @@
   }
 
   function handleFile(file) {
-    if (!file) return;
-    if (!file.type || !file.type.match(/^image\//)) {
-      alert(
-        "Ce fichier n’est pas reconnu comme une image (types acceptés : JPG, PNG, GIF, WebP, etc.). Les PDF ou documents sont refusés."
-      );
-      return;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      alert(
-        "Photo trop lourde (max. environ 12 Mo). Réduis la taille ou choisis une autre image."
-      );
-      return;
-    }
-    var identite = getMonIdentite();
-    if (!identite) {
-      alert("Identité manquante. Retourne sur l’accueil pour te créer un profil.");
-      return;
-    }
-
-    var reader = new FileReader();
-    reader.onerror = function () {
-      alert("Impossible de lire ce fichier. Réessaie avec une photo JPG ou PNG.");
-    };
-    reader.onload = function () {
-      var dataUrl = reader.result;
-      if (typeof dataUrl !== "string" || dataUrl.length < 32) {
-        alert("Import incomplet. Réessaie avec une autre photo.");
+    try {
+      if (!file) return;
+      if (!file.type || !file.type.match(/^image\//)) {
+        alert(
+          "Ce fichier n’est pas reconnu comme une image (types acceptés : JPG, PNG, GIF, WebP, etc.). Les PDF ou documents sont refusés."
+        );
         return;
       }
-      var arr = loadSouvenirs();
-      arr.push({
-        id: Date.now(),
-        identite: identite,
-        image: dataUrl,
-        date: formatDate(new Date()),
+      if (file.size > MAX_IMAGE_BYTES) {
+        alert(
+          "Photo trop lourde (max. environ 12 Mo). Réduis la taille ou choisis une autre image."
+        );
+        return;
+      }
+      var identite = localStorage.getItem("monIdentite");
+      if (!identite || !String(identite).trim()) {
+        alert("Identité manquante. Retourne sur l’accueil pour te créer un profil.");
+        return;
+      }
+
+      var monID = getMyMonID();
+      if (!monID) {
+        alert("Identifiant appareil manquant. Recharge la page et réessaie.");
+        return;
+      }
+
+      var db = getDb();
+      if (!db) {
+        alert("Firebase indisponible. Vérifie la connexion et recharge la page.");
+        return;
+      }
+
+      readFileAsDataURL(file, function (readErr, dataUrl) {
+        if (readErr) {
+          alert(readErr.message || "Erreur de lecture du fichier.");
+          return;
+        }
+        try {
+          maybeCompressBase64(dataUrl, function (compErr, finalUrl) {
+            if (compErr) {
+              alert(compErr.message || "Erreur lors de la compression de l’image.");
+              return;
+            }
+            try {
+              var now = new Date();
+              var payload = {
+                identite: String(identite).trim(),
+                monID: monID,
+                image: finalUrl,
+                date: now.toLocaleDateString("fr-FR"),
+                heure: now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+              };
+              db.ref(REF_SOUVENIRS).push(payload, function (err) {
+                if (err) {
+                  alert(
+                    "Impossible d’enregistrer la photo : " +
+                      ((err && err.message) || "erreur Firebase. Réessaie plus tard.")
+                  );
+                  return;
+                }
+                try {
+                  closeModal();
+                  inputCamera.value = "";
+                  inputGallery.value = "";
+                  alert("Photo ajoutée ! ✅");
+                } catch (e2) {
+                  alert("Photo enregistrée, mais une erreur d’interface s’est produite. Recharge si besoin.");
+                }
+              });
+            } catch (e) {
+              alert(e.message || "Erreur inattendue lors de l’envoi.");
+            }
+          });
+        } catch (e) {
+          alert(e.message || "Erreur lors du traitement de l’image.");
+        }
       });
-      saveSouvenirs(arr);
-      closeModal();
-      inputCamera.value = "";
-      inputGallery.value = "";
-      render();
-    };
-    reader.readAsDataURL(file);
+    } catch (e) {
+      alert(e.message || "Erreur lors de l’ajout de la photo. Réessaie.");
+    }
   }
 
-  fab.addEventListener("click", function () {
-    clearLongPressState();
-    openModal();
-  });
+  if (fab) {
+    fab.addEventListener("click", function () {
+      clearLongPressState();
+      openModal();
+    });
+  }
 
-  overlay.addEventListener("click", function (e) {
-    if (e.target === overlay) closeModal();
-  });
+  if (overlay) {
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay) closeModal();
+    });
+  }
   if (modalInner) {
     modalInner.addEventListener("click", function (e) {
       e.stopPropagation();
@@ -375,27 +571,36 @@
     btnAddCancel.addEventListener("click", closeModal);
   }
 
-  btnSourceCamera.addEventListener("click", function () {
-    inputCamera.click();
-  });
+  if (btnSourceCamera && inputCamera) {
+    btnSourceCamera.addEventListener("click", function () {
+      inputCamera.click();
+    });
+  }
 
-  btnSourceGallery.addEventListener("click", function () {
-    inputGallery.click();
-  });
+  if (btnSourceGallery && inputGallery) {
+    btnSourceGallery.addEventListener("click", function () {
+      inputGallery.click();
+    });
+  }
 
-  inputCamera.addEventListener("change", function () {
-    var f = inputCamera.files && inputCamera.files[0];
-    if (f) handleFile(f);
-  });
+  if (inputCamera) {
+    inputCamera.addEventListener("change", function () {
+      var f = inputCamera.files && inputCamera.files[0];
+      if (f) handleFile(f);
+    });
+  }
 
-  inputGallery.addEventListener("change", function () {
-    var f = inputGallery.files && inputGallery.files[0];
-    if (f) handleFile(f);
-  });
+  if (inputGallery) {
+    inputGallery.addEventListener("change", function () {
+      var f = inputGallery.files && inputGallery.files[0];
+      if (f) handleFile(f);
+    });
+  }
 
   document.addEventListener("click", function (e) {
     if (Date.now() < menuOpenGuardUntil) return;
     if (e.target.closest(".souvenir-item__menu-btn")) return;
+    if (e.target.closest(".souvenir-item__admin-del")) return;
     clearLongPressState();
   });
 
@@ -430,8 +635,8 @@
     teamRow.addEventListener("click", function (e) {
       var av = e.target.closest(".team-member__avatar");
       if (!av) return;
-      var img = av.querySelector("img");
-      if (img && img.getAttribute("src")) openLightbox(img.src);
+      var imgEl = av.querySelector("img");
+      if (imgEl && imgEl.getAttribute("src")) openLightbox(imgEl.src);
     });
   }
 
@@ -447,11 +652,12 @@
   if (grid) {
     grid.addEventListener("click", function (e) {
       if (e.target.closest(".souvenir-item__menu")) return;
+      if (e.target.closest(".souvenir-item__admin-del")) return;
       var cell = e.target.closest(".souvenir-item");
       if (!cell || cell.classList.contains("show-menu")) return;
-      var img = cell.querySelector(".souvenir-item__thumb img");
-      if (!img || e.target !== img) return;
-      if (img.getAttribute("src")) openLightbox(img.src);
+      var imgEl = cell.querySelector(".souvenir-item__thumb img");
+      if (!imgEl || e.target !== imgEl) return;
+      if (imgEl.getAttribute("src")) openLightbox(imgEl.src);
     });
   }
 
@@ -509,7 +715,7 @@
     });
   }
 
-  render();
+  attachFirebaseListener();
 
   document.body.classList.add("page-enter");
   requestAnimationFrame(function () {

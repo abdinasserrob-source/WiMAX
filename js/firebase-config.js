@@ -11,6 +11,7 @@
  * }
  *
  * Structure classement : classement/{monID}/ → { id, identite, score, total, date }
+ * Souvenirs galerie : souvenirs/{pushId}/ → { identite, monID, image, date, heure }
  * (monID = identifiant appareil, jamais affiché à l’utilisateur.)
  * (Lecture/écriture ouvertes — à durcir en production.)
  */

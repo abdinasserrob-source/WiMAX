@@ -148,30 +148,51 @@ a {
 .identite-bar-wrap {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   max-width: 100%;
 }
 
-.identite-bar__label {
-  font-size: 0.72rem;
+.identite-bar__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a73e8;
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--texte);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 7.5rem;
+  line-height: 1.2;
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
+  max-width: min(200px, 46vw);
+  min-width: 0;
+  flex-shrink: 1;
 }
 
-.identite-bar__edit {
+.identite-bar__badge-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.identite-bar__badge-emoji {
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.identite-bar__icon-btn {
   flex-shrink: 0;
   border: none;
   background: transparent;
   cursor: pointer;
   padding: 4px;
-  font-size: 0.95rem;
   line-height: 1;
   border-radius: 8px;
-  opacity: 0.85;
+  opacity: 0.9;
+}
+
+.identite-bar__edit {
+  font-size: 0.95rem;
 }
 
 .identite-bar__edit:active {
@@ -185,14 +206,7 @@ a {
 }
 
 .identite-bar__classement {
-  background: transparent;
-  border: none;
-  cursor: pointer;
   font-size: 20px;
-  line-height: 1;
-  margin-left: 8px;
-  padding: 2px 4px;
-  flex-shrink: 0;
 }
 
 .identite-bar__classement:active {
@@ -277,16 +291,26 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
   font-size: 0.9rem;
   gap: 8px;
+  background: var(--fond, #f8f9fa);
 }
 
 .classement-global-row--me {
-  background: #e8f0fe;
-  font-weight: 700;
-  color: #1a73e8;
+  background: #1a73e8;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 11px 12px;
+  font-size: 0.98rem;
+  box-shadow: 0 2px 10px rgba(26, 115, 232, 0.35);
+}
+
+.classement-global-row--me .classement-global-row__name,
+.classement-global-row--me .classement-global-row__score,
+.classement-global-row--me .classement-global-row__vous {
+  color: #ffffff;
 }
 
 .classement-global-row__name {
@@ -297,9 +321,23 @@ a {
   white-space: nowrap;
 }
 
-.classement-global-row__score {
+.classement-global-row__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+.classement-global-row__score {
   font-variant-numeric: tabular-nums;
+}
+
+.classement-global-row__vous {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  opacity: 0.95;
 }
 
 /* Accueil : pas de retour, titre + identité */
@@ -1287,16 +1325,58 @@ a.btn-primary {
 
 .quiz-classement-view__row {
   font-size: 0.92rem;
+  padding: 0;
+  background: transparent;
+  border-radius: 10px;
+  border: none;
+}
+
+.quiz-classement-view__row-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
   padding: 10px 12px;
   background: var(--fond);
-  border-radius: 8px;
+  border-radius: 10px;
   border-left: 3px solid var(--primaire);
 }
 
-.quiz-classement-view__row--me {
-  background: rgba(26, 115, 232, 0.12);
-  border-left-color: var(--primaire-fonce);
+.quiz-classement-view__row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quiz-classement-view__row-scores {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.quiz-classement-view__vous {
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0.95;
+}
+
+.quiz-classement-view__row--me .quiz-classement-view__row-inner {
+  background: #1a73e8;
+  color: #ffffff;
+  border-left-color: rgba(255, 255, 255, 0.5);
+  padding: 12px 14px;
+  font-size: 0.98rem;
   font-weight: 600;
+  box-shadow: 0 2px 10px rgba(26, 115, 232, 0.35);
+}
+
+.quiz-classement-view__row--me .quiz-classement-view__vous {
+  color: #ffffff;
 }
 
 .quiz-classement-view__empty {
@@ -1509,6 +1589,35 @@ a.btn-primary {
 
 .quiz-next-wrap {
   margin-top: 20px;
+}
+
+.quiz-result-user-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 20px 12px 8px;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.quiz-result-user-banner__badge {
+  max-width: min(280px, 90vw);
+}
+
+.quiz-result-user-banner__badge.hidden {
+  display: none;
+}
+
+.quiz-result-user-banner__suffix {
+  color: var(--texte);
+}
+
+.quiz-result-user-banner__suffix strong {
+  color: var(--primaire);
+  font-weight: 700;
 }
 
 .quiz-result-circle {
@@ -1824,13 +1933,38 @@ a.btn-primary {
   border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.souvenir-item__prenom {
-  font-weight: 700;
-  color: var(--texte);
-  font-size: 0.8rem;
-  display: block;
+.souvenir-item__identite-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 5px;
   margin-bottom: 2px;
+}
+
+.souvenir-item__prenom {
+  font-weight: 500;
+  color: var(--sous-texte);
+  font-size: 0.8rem;
+  display: inline;
+  max-width: 100%;
   word-break: break-word;
+}
+
+.souvenir-item__identite-row--mine .souvenir-item__prenom {
+  font-weight: 700;
+  color: #1a73e8;
+}
+
+.souvenir-item__moi-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #1a73e8;
+  background: rgba(26, 115, 232, 0.14);
+  padding: 2px 7px;
+  border-radius: 8px;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .souvenir-item__date {
@@ -1873,6 +2007,69 @@ a.btn-primary {
 
 .souvenir-item__menu-btn:active {
   background: #f1f3f4;
+}
+
+.souvenir-item__menu-title {
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 12px;
+  line-height: 1.35;
+}
+
+.souvenir-item__menu-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 280px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.souvenir-item__menu-row .souvenir-item__menu-btn {
+  flex: 1;
+  min-width: 100px;
+  max-width: 140px;
+}
+
+.souvenir-item__menu-btn--secondary {
+  background: #e8eaed;
+  color: var(--texte);
+}
+
+.souvenir-item__menu-btn--danger {
+  background: #c5221f;
+  color: #fff;
+}
+
+.souvenir-item__menu-btn--danger:active {
+  background: #a50e0b;
+}
+
+.souvenir-item__admin-del {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 6;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.95);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.souvenir-item__admin-del:active {
+  background: #b91c1c;
 }
 
 .fab-galerie {

@@ -185,7 +185,7 @@
     var b = document.createElement("button");
     b.type = "button";
     b.id = "btnClassement";
-    b.className = "identite-bar__classement";
+    b.className = "identite-bar__classement identite-bar__icon-btn";
     b.setAttribute("aria-label", "Voir le classement WiMAX");
     b.textContent = "🏆";
     return b;
@@ -205,15 +205,34 @@
       el.appendChild(createClassementButton());
       return;
     }
-    var span = document.createElement("span");
-    span.className = "identite-bar__label";
-    span.textContent = id;
-    span.title = id;
-    el.appendChild(span);
+    var parsed = parseExisting(id);
+    var badge = document.createElement("span");
+    badge.className = "identite-bar__badge";
+    badge.title = id;
+    badge.setAttribute("aria-label", "Identité : " + id);
+
+    var spEmoji = document.createElement("span");
+    spEmoji.className = "identite-bar__badge-emoji";
+    spEmoji.setAttribute("aria-hidden", "true");
+    spEmoji.textContent = parsed.emoji || "";
+
+    var spName = document.createElement("span");
+    spName.className = "identite-bar__badge-name";
+    spName.textContent = parsed.name ? parsed.name : "";
+
+    badge.appendChild(spEmoji);
+    if (parsed.name) {
+      badge.appendChild(spName);
+    } else if (!parsed.emoji && id) {
+      spName.textContent = id;
+      badge.appendChild(spName);
+    }
+
+    el.appendChild(badge);
     el.appendChild(createClassementButton());
     var btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "identite-bar__edit";
+    btn.className = "identite-bar__edit identite-bar__icon-btn";
     btn.setAttribute("aria-label", "Modifier mon identité");
     btn.textContent = "✏️";
     btn.addEventListener("click", function () {

@@ -131,12 +131,23 @@
       left.className = "classement-global-row__name";
       left.textContent = medal + " " + s.identite;
 
+      var rightWrap = document.createElement("span");
+      rightWrap.className = "classement-global-row__right";
+
       var right = document.createElement("span");
       right.className = "classement-global-row__score";
       right.textContent = s.score + "/" + s.total;
+      rightWrap.appendChild(right);
+
+      if (isMe) {
+        var vous = document.createElement("span");
+        vous.className = "classement-global-row__vous";
+        vous.textContent = "● Vous";
+        rightWrap.appendChild(vous);
+      }
 
       row.appendChild(left);
-      row.appendChild(right);
+      row.appendChild(rightWrap);
       container.appendChild(row);
     });
   }

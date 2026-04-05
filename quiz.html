@@ -23,11 +23,7 @@
       </header>
 
       <div id="quiz-play">
-        <p class="quiz-intro">
-          Banque de <strong>100 QCM</strong> (10 thèmes × 10), alignés sur le rapport WiMAX. Chaque session tire
-          <strong>10 questions au hasard</strong> — les réponses sont aussi mélangées. « Rejouer » évite de reprendre les mêmes
-          questions que la partie précédente.
-        </p>
+        
         <div class="quiz-progress-text">
           <span id="quiz-progress-label">Question 1/10</span>
           <strong id="quiz-progress-pct">0% complété</strong>
@@ -107,7 +103,7 @@
       <div class="quiz-lb-modal__box quiz-classement-view__box" role="dialog" aria-labelledby="quiz-classement-view-title" aria-modal="true">
         <h3 id="quiz-classement-view-title">🏆 Classement WiMAX</h3>
         <p class="quiz-classement-view__subtitle">
-          Tous les scores (tri du meilleur au plus bas), temps réel — Firebase. Même pseudo sur deux téléphones = deux lignes. Ta ligne (cet appareil) est surlignée.
+          Tous les scores (tri du meilleur au plus bas)
         </p>
         <ol class="quiz-classement-view__list" id="quiz-classement-view-list"></ol>
         <div class="quiz-classement-view__footer">
@@ -116,6 +112,7 @@
       </div>
     </div>
 
+    <script src="js/app.js"></script>
     <script src="js/quiz-questions.js"></script>
     <script src="js/quiz.js"></script>
   </body>

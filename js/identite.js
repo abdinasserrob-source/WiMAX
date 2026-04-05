@@ -181,6 +181,16 @@
     document.addEventListener("keydown", escapeHandler);
   }
 
+  function createClassementButton() {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.id = "btnClassement";
+    b.className = "identite-bar__classement";
+    b.setAttribute("aria-label", "Voir le classement WiMAX");
+    b.textContent = "🏆";
+    return b;
+  }
+
   function renderAvatarSlot(el) {
     if (!el) return;
     el.innerHTML = "";
@@ -192,12 +202,15 @@
       a.href = "home.html";
       a.textContent = "Identité";
       el.appendChild(a);
+      el.appendChild(createClassementButton());
       return;
     }
     var span = document.createElement("span");
     span.className = "identite-bar__label";
     span.textContent = id;
     span.title = id;
+    el.appendChild(span);
+    el.appendChild(createClassementButton());
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "identite-bar__edit";
@@ -206,7 +219,6 @@
     btn.addEventListener("click", function () {
       showIdentiteModal({ firstRun: false });
     });
-    el.appendChild(span);
     el.appendChild(btn);
   }
 

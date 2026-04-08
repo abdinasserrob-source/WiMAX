@@ -1,101 +1,105 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>WiMAX — Supports</title>
-    <link rel="stylesheet" href="css/style.css" />
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-  </head>
-  <body>
-    <div class="app-shell" style="position: relative">
-      <img class="wimax-dish-deco" src="assets/dish.png" alt="" />
 
-      <header class="page-header" style="position: relative; z-index: 1">
-        <button type="button" class="btn-back" onclick="history.back()" aria-label="Retour">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </button>
-        <h1 class="page-header__title">WiMAX</h1>
-        <div data-identite-slot aria-live="polite"></div>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WiMAX — Supports</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
 
-      <!--
+<body>
+  <div class="app-shell" style="position: relative">
+    <img class="wimax-dish-deco" src="assets/dish.png" alt="" />
+
+    <header class="page-header" style="position: relative; z-index: 1">
+      <button type="button" class="btn-back" onclick="history.back()" aria-label="Retour">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </button>
+      <h1 class="page-header__title">WiMAX</h1>
+      <div data-identite-slot aria-live="polite"></div>
+    </header>
+
+    <!--
         Encadrant : déposer dans assets/supports/
         - wimax.pdf (rapport)
         - wimax-presentation.pdf (export PDF des slides pour l’aperçu dans la page)
         - wimax.pptx (présentation à télécharger)
         - wimax-resume.pdf (résumé)
       -->
-      <div class="wimax-doc-page">
-        <p class="label-caps">Documentation technique</p>
-        <h2 class="wimax-doc-title">Supports pédagogiques WiMAX</h2>
-        <p class="wimax-doc-lead">
-          Documents mis à disposition par l’équipe WiMAX : consultez chaque fichier dans son cadre ou téléchargez-le.
+    <div class="wimax-doc-page">
+      <p class="label-caps">Documentation technique</p>
+      <h2 class="wimax-doc-title">Supports pédagogiques WiMAX</h2>
+      <p class="wimax-doc-lead">
+        Documents mis à disposition par l’équipe WiMAX : consultez chaque fichier dans son cadre ou téléchargez-le.
+      </p>
+
+      <section class="wimax-doc-section" aria-labelledby="wimax-doc-rapport">
+        <h3 class="wimax-doc-block-title" id="wimax-doc-rapport">Rapport (PDF)</h3>
+        <p class="wimax-doc-block-lead">Document principal de cours.</p>
+        <div class="maquette-frame-wrap">
+          <iframe src="assets/supports/wimax.pdf" title="Aperçu du rapport PDF"></iframe>
+        </div>
+        <div class="maquette-actions">
+          <a class="btn-primary" href="assets/supports/wimax.pdf" download="wimax.pdf">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+            </svg>
+            Télécharger
+          </a>
+        </div>
+      </section>
+
+      <section class="wimax-doc-section" aria-labelledby="wimax-doc-ppt">
+        <h3 class="wimax-doc-block-title" id="wimax-doc-ppt">Présentation (PowerPoint)</h3>
+        <p class="wimax-doc-block-lead">
+          Aperçu : Le bouton ci-dessous télécharge la présentation complète au format <code>.pptx</code>.
         </p>
+        <div class="maquette-frame-wrap maquette-frame-wrap--wimax-secondary">
+          <iframe src="assets/supports/wimax-presentation.pdf" title="Aperçu de la présentation (PDF)"></iframe>
+        </div>
+        <div class="maquette-actions">
+          <a class="btn-primary" href="assets/supports/wimax.pptx" download="wimax.pptx">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+            </svg>
+            Télécharger
+          </a>
+        </div>
+      </section>
 
-        <section class="wimax-doc-section" aria-labelledby="wimax-doc-rapport">
-          <h3 class="wimax-doc-block-title" id="wimax-doc-rapport">Rapport (PDF)</h3>
-          <p class="wimax-doc-block-lead">Document principal de cours.</p>
-          <div class="maquette-frame-wrap">
-            <iframe src="assets/supports/wimax.pdf" title="Aperçu du rapport PDF"></iframe>
-          </div>
-          <div class="maquette-actions">
-            <a class="btn-primary" href="assets/supports/wimax.pdf" download="wimax.pdf">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-              </svg>
-              Télécharger
-            </a>
-          </div>
-        </section>
-
-        <section class="wimax-doc-section" aria-labelledby="wimax-doc-ppt">
-          <h3 class="wimax-doc-block-title" id="wimax-doc-ppt">Présentation (PowerPoint)</h3>
-          <p class="wimax-doc-block-lead">
-            Aperçu :  Le bouton ci-dessous télécharge la présentation complète au format <code>.pptx</code>.
-          </p>
-          <div class="maquette-frame-wrap maquette-frame-wrap--wimax-secondary">
-            <iframe src="assets/supports/wimax-presentation.pdf" title="Aperçu de la présentation (PDF)"></iframe>
-          </div>
-          <div class="maquette-actions">
-            <a class="btn-primary" href="assets/supports/wimax.pptx" download="wimax.pptx">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-              </svg>
-              Télécharger
-            </a>
-          </div>
-        </section>
-
-        <section class="wimax-doc-section" aria-labelledby="wimax-doc-resume">
-          <h3 class="wimax-doc-block-title" id="wimax-doc-resume">Résumé (PDF)</h3>
-          <p class="wimax-doc-block-lead">Synthèse du module.</p>
-          <div class="maquette-frame-wrap maquette-frame-wrap--wimax-secondary">
-            <iframe src="assets/supports/wimax-resume.pdf" title="Aperçu du résumé PDF"></iframe>
-          </div>
-          <div class="maquette-actions">
-            <a class="btn-primary" href="assets/supports/wimax-resume.pdf" download="wimax-resume.pdf">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-              </svg>
-              Télécharger
-            </a>
-          </div>
-        </section>
-      </div>
+      <section class="wimax-doc-section" aria-labelledby="wimax-doc-resume">
+        <h3 class="wimax-doc-block-title" id="wimax-doc-resume">Résumé (PDF)</h3>
+        <p class="wimax-doc-block-lead">Synthèse du module.</p>
+        <div class="maquette-frame-wrap maquette-frame-wrap--wimax-secondary">
+          <iframe src="assets/supports/WiMAX_Resume_Soutenance.pdf" title="Aperçu du résumé PDF"></iframe>
+        </div>
+        <div class="maquette-actions">
+          <a class="btn-primary" href="assets/supports/wimax-resume.pdf" download="wimax-resume.pdf">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+            </svg>
+            Télécharger
+          </a>
+        </div>
+      </section>
     </div>
+  </div>
 
-    <script src="js/identite.js"></script>
-    <script src="js/app.js"></script>
-    <script>
-      document.body.classList.add("page-enter");
-      requestAnimationFrame(function () {
-        document.body.classList.add("page-enter-active");
-      });
-    </script>
-  </body>
+  <script src="js/identite.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.body.classList.add("page-enter");
+    requestAnimationFrame(function () {
+      document.body.classList.add("page-enter-active");
+    });
+  </script>
+</body>
+
 </html>

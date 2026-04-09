@@ -1204,6 +1204,69 @@ a.btn-primary {
   height: min(58vh, 520px);
 }
 
+/* PowerPoint : aperçu client (canvas PptxViewJS) */
+.maquette-frame-wrap--pptx-embed {
+  margin-top: 16px;
+}
+
+.wimax-pptx-root {
+  padding: 12px 12px 16px;
+  background: var(--carte);
+}
+
+.wimax-pptx-status {
+  margin: 0 0 12px;
+  min-height: 1.5em;
+  font-size: 0.9rem;
+  color: var(--sous-texte);
+  text-align: center;
+}
+
+.wimax-pptx-status--error {
+  color: #b42318;
+  padding: 1rem 0.75rem;
+  line-height: 1.5;
+}
+
+.wimax-pptx-canvas-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  max-height: min(70vh, 720px);
+  margin-bottom: 12px;
+  border-radius: calc(var(--rayon) - 4px);
+  background: #e8e8ed;
+}
+
+.wimax-pptx-canvas-wrap canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.wimax-pptx-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.wimax-pptx-nav {
+  min-width: 7rem;
+}
+
+.wimax-pptx-counter {
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--sous-texte);
+  min-width: 4rem;
+  text-align: center;
+}
+
 .maquette-actions {
   position: sticky;
   bottom: 0;

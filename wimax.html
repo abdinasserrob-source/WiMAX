@@ -30,7 +30,7 @@
         Encadrant : déposer dans assets/supports/
         - wimax.pdf (rapport)
         - wimax-presentation.pdf (export PDF des slides pour l’aperçu dans la page)
-        - wimax.pptx (présentation à télécharger)
+        - ppt_WiMAX.pptx (présentation ; aperçu dans le navigateur via PptxViewJS, page servie en http(s) — pas file://)
         - wimax-resume.pdf (résumé)
       -->
     <div class="wimax-doc-page">
@@ -44,10 +44,10 @@
         <h3 class="wimax-doc-block-title" id="wimax-doc-rapport">Rapport (PDF)</h3>
         <p class="wimax-doc-block-lead">Document principal de cours.</p>
         <div class="maquette-frame-wrap">
-          <iframe src="assets/supports/wimax.pdf" title="Aperçu du rapport PDF"></iframe>
+          <iframe src="assets/supports/WiMAX (8).pdf" title="Aperçu du rapport PDF"></iframe>
         </div>
         <div class="maquette-actions">
-          <a class="btn-primary" href="assets/supports/wimax.pdf" download="wimax.pdf">
+          <a class="btn-primary" href="assets/supports/WiMAX (8).pdf" download="WiMAX (8).pdf">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
             </svg>
@@ -56,23 +56,7 @@
         </div>
       </section>
 
-      <section class="wimax-doc-section" aria-labelledby="wimax-doc-ppt">
-        <h3 class="wimax-doc-block-title" id="wimax-doc-ppt">Présentation (PowerPoint)</h3>
-        <p class="wimax-doc-block-lead">
-          Aperçu : Le bouton ci-dessous télécharge la présentation complète au format <code>.pptx</code>.
-        </p>
-        <div class="maquette-frame-wrap maquette-frame-wrap--wimax-secondary">
-          <iframe src="assets/supports/wimax-presentation.pdf" title="Aperçu de la présentation (PDF)"></iframe>
-        </div>
-        <div class="maquette-actions">
-          <a class="btn-primary" href="assets/supports/wimax.pptx" download="wimax.pptx">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-            </svg>
-            Télécharger
-          </a>
-        </div>
-      </section>
+
 
       <section class="wimax-doc-section" aria-labelledby="wimax-doc-resume">
         <h3 class="wimax-doc-block-title" id="wimax-doc-resume">Résumé (PDF)</h3>
@@ -100,6 +84,10 @@
       document.body.classList.add("page-enter-active");
     });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxviewjs@1.1.9/dist/PptxViewJS.min.js"></script>
+  <script src="js/wimax-pptx-viewer.js"></script>
 </body>
 
 </html>

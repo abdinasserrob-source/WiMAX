@@ -1,53 +1,86 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Maquette — WiMAX</title>
-    <link rel="stylesheet" href="css/style.css" />
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-  </head>
-  <body>
-    <div class="app-shell">
-      <header class="page-header">
-        <button type="button" class="btn-back" onclick="history.back()" aria-label="Retour">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </button>
-        <h1 class="page-header__title">Maquette</h1>
-        <div data-identite-slot aria-live="polite"></div>
-      </header>
 
-      <p class="label-caps">Documentation technique</p>
-      <h2 style="font-family: Poppins, sans-serif; font-size: 1.2rem; margin: 0 0 8px">Schéma d'architecture réseau</h2>
-      <p style="margin: 0 0 8px; color: var(--sous-texte); font-size: 0.88rem">
-        Représentation de la couverture du signal WiMAX et du positionnement des pylônes pour le campus universitaire (document de démonstration).
-      </p>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maquette — WiMAX</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
 
-      <div class="maquette-frame-wrap">
-        <iframe src="assets/Fiche xmind.pdf" title="Aperçu PDF maquette"></iframe>
-      </div>
+<body>
+  <div class="app-shell">
+    <header class="page-header">
+      <button type="button" class="btn-back" onclick="history.back()" aria-label="Retour">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </button>
+      <h1 class="page-header__title">Maquette</h1>
+      <div data-identite-slot aria-live="polite"></div>
+    </header>
 
-      <div class="maquette-actions">
-        <a class="btn-primary" href="assets/maquette.pdf" download="maquette.pdf">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-          </svg>
-          Télécharger
-        </a>
-      </div>
+    <p class="label-caps">Xmind</p>
+   
+    <div class="maquette-frame-wrap">
+      <iframe src="assets/WiMAX Worldwide Interoperability for Microware Acess XMIND2.pdf"
+        title="Aperçu PDF maquette"></iframe>
     </div>
 
-    <script src="js/identite.js"></script>
-    <script src="js/app.js"></script>
-    <script>
-      document.body.classList.add("page-enter");
-      requestAnimationFrame(function () {
-        document.body.classList.add("page-enter-active");
-      });
-    </script>
-  </body>
+    <div class="maquette-actions">
+      <a class="btn-primary" href="assets/WiMAX Worldwide Interoperability for Microware Acess XMIND2.pdf"" download="WiMAX Worldwide Interoperability for Microware Acess XMIND2.pdf"">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+        </svg>
+        Télécharger
+      </a>
+    </div>
+
+    <p class="label-caps">Poster</p>
+   
+    <div class="maquette-frame-wrap">
+      <iframe src="assets/Poster WiMAX.pdf"
+        title="Aperçu PDF maquette"></iframe>
+    </div>
+
+    <div class="maquette-actions">
+      <a class="btn-primary" href="assets/Poster WiMAX.pdf" download="Poster WiMAX.pdf">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+        </svg>
+        Télécharger
+      </a>
+    </div>
+
+    <p class="label-caps">Fiche technique</p>
+   
+    <div class="maquette-frame-wrap">
+      <iframe src="assets/Document A4 Fiche de poste employé Beige Marron Simple Moderne (2).pdf"
+        title="Aperçu PDF maquette"></iframe>
+    </div>
+
+    <div class="maquette-actions">
+      <a class="btn-primary" href="assets/Document A4 Fiche de poste employé Beige Marron Simple Moderne (2).pdf" download="Document A4 Fiche de poste employé Beige Marron Simple Moderne (2).pdf">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+        </svg>
+        Télécharger
+      </a>
+    </div>
+  </div>
+
+  <script src="js/identite.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.body.classList.add("page-enter");
+    requestAnimationFrame(function () {
+      document.body.classList.add("page-enter-active");
+    });
+  </script>
+</body>
+
 </html>
